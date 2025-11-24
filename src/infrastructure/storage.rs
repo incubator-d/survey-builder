@@ -1,4 +1,6 @@
-use crate::models::*;
+use crate::domain::models::*;
+use crate::shared::error::{AppError, AppResult};
+use crate::infrastructure::storage_trait::Storage;
 use anyhow::{Context, Result};
 use uuid::Uuid;
 use web_sys::window;
@@ -8,6 +10,28 @@ const STORAGE_INDEX_KEY: &str = "survey_audit_index";
 
 /// Gestionnaire de stockage utilisant localStorage (compatible Vercel)
 pub struct WebStorage;
+
+impl Storage for WebStorage {
+    fn save_audit(&self, audit: &Audit) -> AppResult<()> {
+        Self::save_audit_impl(audit)
+            .map_err(|e| AppError::Storage(e.to_string()))
+    }
+
+    fn load_audit(&self, audit_id: &Uuid) -> AppResult<Audit> {
+        Self::load_audit_impl(audit_id)
+            .map_err(|e| AppError::Load(e.to_string()))
+    }
+
+    fn list_audits(&self) -> AppResult<Vec<Uuid>> {
+        Self::list_audits_impl()
+            .map_err(|e| AppError::Load(e.to_string()))
+    }
+
+    fn delete_audit(&self, audit_id: &Uuid) -> AppResult<()> {
+        Self::delete_audit_impl(audit_id)
+            .map_err(|e| AppError::Storage(e.to_string()))
+    }
+}
 
 impl WebStorage {
     /// Obtient le localStorage
@@ -19,8 +43,8 @@ impl WebStorage {
             .context("localStorage non disponible")
     }
 
-    /// Sauvegarde un audit dans localStorage
-    pub fn save_audit(audit: &Audit) -> Result<()> {
+    /// Sauvegarde un audit dans localStorage (implémentation interne)
+    fn save_audit_impl(audit: &Audit) -> Result<()> {
         let storage = Self::get_storage()?;
         let key = format!("{}{}", STORAGE_KEY_PREFIX, audit.id);
         let json = serde_json::to_string(audit)
@@ -36,8 +60,8 @@ impl WebStorage {
         Ok(())
     }
 
-    /// Charge un audit depuis localStorage
-    pub fn load_audit(audit_id: &Uuid) -> Result<Audit> {
+    /// Charge un audit depuis localStorage (implémentation interne)
+    fn load_audit_impl(audit_id: &Uuid) -> Result<Audit> {
         let storage = Self::get_storage()?;
         let key = format!("{}{}", STORAGE_KEY_PREFIX, audit_id);
         
@@ -52,8 +76,8 @@ impl WebStorage {
         Ok(audit)
     }
 
-    /// Liste tous les IDs d'audits disponibles
-    pub fn list_audits() -> Result<Vec<Uuid>> {
+    /// Liste tous les IDs d'audits disponibles (implémentation interne)
+    fn list_audits_impl() -> Result<Vec<Uuid>> {
         let storage = Self::get_storage()?;
         
         let index_json = storage
@@ -74,8 +98,8 @@ impl WebStorage {
         Ok(uuids)
     }
 
-    /// Supprime un audit
-    pub fn delete_audit(audit_id: &Uuid) -> Result<()> {
+    /// Supprime un audit (implémentation interne)
+    fn delete_audit_impl(audit_id: &Uuid) -> Result<()> {
         let storage = Self::get_storage()?;
         let key = format!("{}{}", STORAGE_KEY_PREFIX, audit_id);
         

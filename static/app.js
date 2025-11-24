@@ -430,7 +430,11 @@ function renderQuestion(question, audit) {
 // Répondre à une question
 function answerQuestion(questionId, answer, requiresPercentage) {
     // Mettre à jour visuellement les boutons
-    const card = document.querySelector(`[id*="${questionId}"]`).closest('.question-card');
+    const card = document.querySelector(`[id*="${questionId}"]`)?.closest('.question-card');
+    if (!card) {
+        // La carte n'existe pas encore, on ne peut pas mettre à jour visuellement
+        return;
+    }
     card.querySelectorAll('.answer-btn').forEach(btn => btn.classList.remove('selected', 'oui', 'non'));
     
     const answerMap = {
@@ -455,29 +459,59 @@ function answerQuestion(questionId, answer, requiresPercentage) {
 }
 
 // Sauvegarder une réponse
-async function saveAnswer(questionId, requiresPercentage) {
-    const card = document.querySelector(`[id*="${questionId}"]`).closest('.question-card');
-    const selectedBtn = card.querySelector('.answer-btn.selected');
+async function saveAnswer(questionId, requiresPercentage, directAnswer = null) {
+    console.log('saveAnswer appelé:', { questionId, requiresPercentage, directAnswer, currentAuditId });
     
-    if (!selectedBtn) {
-        alert('Veuillez sélectionner une réponse');
+    if (!currentAuditId) {
+        console.error('saveAnswer: currentAuditId n\'est pas défini');
+        alert('Erreur: Aucun audit sélectionné');
         return;
     }
+    
+    let answer = null;
+    
+    if (directAnswer) {
+        // Utiliser la réponse directe (pour les raccourcis clavier)
+        answer = directAnswer;
+        console.log('saveAnswer: utilisation de la réponse directe', answer);
+    } else {
+        // Utiliser la réponse sélectionnée visuellement
+        const card = document.querySelector(`[id*="${questionId}"]`)?.closest('.question-card');
+        const selectedBtn = card ? card.querySelector('.answer-btn.selected') : null;
+        
+        if (!selectedBtn) {
+            alert('Veuillez sélectionner une réponse');
+            return;
+        }
 
-    const answerText = selectedBtn.textContent.trim();
-    const answerMap = {
-        'Oui': 'oui',
-        'Non': 'non',
-        'Je ne sais pas': 'je-ne-sais-pas',
-        'Non applicable': 'non-applicable'
-    };
+        const answerText = selectedBtn.textContent.trim();
+        const answerMap = {
+            'Oui': 'oui',
+            'Non': 'non',
+            'Je ne sais pas': 'je-ne-sais-pas',
+            'Non applicable': 'non-applicable'
+        };
 
-    const answer = answerMap[answerText];
-    const percentage = requiresPercentage ? 
-        parseInt(document.getElementById(`percentage-${questionId}`).value) || null : null;
-    const comment = document.getElementById(`comment-${questionId}`).value.trim() || null;
+        answer = answerMap[answerText];
+    }
+    
+    if (!answer) {
+        alert('Réponse invalide');
+        return;
+    }
+    
+    // Récupérer le pourcentage et le commentaire de manière sécurisée
+    const percentageEl = document.getElementById(`percentage-${questionId}`);
+    const percentage = requiresPercentage && percentageEl ? 
+        parseInt(percentageEl.value) || null : null;
+    
+    const commentEl = document.getElementById(`comment-${questionId}`);
+    const comment = commentEl ? commentEl.value.trim() || null : null;
+
+    console.log('saveAnswer: données à envoyer', { answer, percentage, comment, questionId, currentAuditId });
 
     try {
+        console.log('saveAnswer: appel API en cours...');
         const updatedAudit = await apiCall(`/audits/${currentAuditId}/questions/${questionId}/answer`, {
             method: 'POST',
             body: JSON.stringify({
@@ -486,20 +520,27 @@ async function saveAnswer(questionId, requiresPercentage) {
                 comment,
             }),
         });
+        console.log('saveAnswer: API répondue avec succès', updatedAudit);
 
         currentAudit = updatedAudit;
         
-        // Mettre à jour les réponses dans allQuestions
-        const questionIndex = allQuestions.findIndex(q => q.id === questionId);
-        if (questionIndex !== -1) {
-            // Mettre à jour la réponse dans l'audit
-            const answerIndex = updatedAudit.answers.findIndex(a => a.question_id === questionId);
-            if (answerIndex !== -1) {
-                // La réponse existe déjà, on la met à jour
-                currentAudit.answers[answerIndex] = updatedAudit.answers[answerIndex];
+        // Mettre à jour allQuestions avec les questions de l'audit mis à jour (au cas où elles auraient changé)
+        allQuestions = updatedAudit.questions.sort((a, b) => {
+            if (a.category !== b.category) {
+                return a.category.localeCompare(b.category);
+            }
+            return 0;
+        });
+        
+        // Mettre à jour les réponses dans l'audit
+        const answerIndex = updatedAudit.answers.findIndex(a => a.question_id === questionId);
+        if (answerIndex !== -1) {
+            // La réponse existe déjà, on la met à jour
+            const existingAnswerIndex = currentAudit.answers.findIndex(a => a.question_id === questionId);
+            if (existingAnswerIndex !== -1) {
+                currentAudit.answers[existingAnswerIndex] = updatedAudit.answers[answerIndex];
             } else {
-                // Nouvelle réponse
-                currentAudit.answers.push(updatedAudit.answers.find(a => a.question_id === questionId));
+                currentAudit.answers.push(updatedAudit.answers[answerIndex]);
             }
         }
 
@@ -508,11 +549,44 @@ async function saveAnswer(questionId, requiresPercentage) {
         document.getElementById('completion').textContent = `${completion.toFixed(1)}%`;
 
         // Passer à la question suivante
-        currentQuestionIndex++;
+        // Trouver l'index de la question qui vient d'être sauvegardée dans le nouveau tableau trié
+        const savedQuestionIndex = allQuestions.findIndex(q => q.id === questionId);
+        if (savedQuestionIndex !== -1) {
+            // Passer à la question suivante après celle qui vient d'être sauvegardée
+            currentQuestionIndex = savedQuestionIndex + 1;
+            // S'assurer que l'index ne dépasse pas la longueur
+            if (currentQuestionIndex >= allQuestions.length) {
+                currentQuestionIndex = allQuestions.length;
+            }
+        } else {
+            // Fallback : incrémenter l'index actuel si on ne trouve pas la question
+            // Mais d'abord, trouver la question actuelle dans le nouveau tableau
+            const currentQuestion = allQuestions[currentQuestionIndex];
+            if (currentQuestion && currentQuestion.id === questionId) {
+                // La question actuelle correspond, on peut simplement incrémenter
+                currentQuestionIndex++;
+            } else {
+                // Chercher la question dans le nouveau tableau
+                const foundIndex = allQuestions.findIndex(q => q.id === questionId);
+                if (foundIndex !== -1) {
+                    currentQuestionIndex = foundIndex + 1;
+                } else {
+                    currentQuestionIndex++;
+                }
+            }
+            if (currentQuestionIndex >= allQuestions.length) {
+                currentQuestionIndex = allQuestions.length;
+            }
+        }
+        
+        // Mettre à jour l'affichage
+        console.log('saveAnswer: mise à jour de l\'affichage, currentQuestionIndex =', currentQuestionIndex);
         updateCategory();
         updateProgress();
         displayCurrentQuestion();
+        console.log('saveAnswer: affichage mis à jour');
     } catch (error) {
+        console.error('saveAnswer: erreur capturée', error);
         alert(`Erreur: ${error.message}`);
     }
 }
@@ -763,8 +837,93 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Gestion des raccourcis clavier
+function handleKeyboardShortcut(event) {
+    // Log pour débogage
+    console.log('handleKeyboardShortcut appelé, touche:', event.key);
+    
+    // Vérifier qu'on est dans la vue détail
+    const detailView = document.getElementById('detail-view');
+    if (!detailView) {
+        console.log('handleKeyboardShortcut: detail-view non trouvé');
+        return;
+    }
+    if (detailView.classList.contains('hidden')) {
+        console.log('handleKeyboardShortcut: detail-view est caché');
+        return;
+    }
+    
+    // Vérifier qu'on n'est pas en train de taper dans un champ de texte
+    const activeElement = document.activeElement;
+    if (activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.isContentEditable
+    )) {
+        return;
+    }
+    
+    // Vérifier qu'il y a une question courante
+    if (allQuestions.length === 0) {
+        console.log('handleKeyboardShortcut: allQuestions est vide');
+        return;
+    }
+    
+    if (currentQuestionIndex >= allQuestions.length) {
+        console.log('handleKeyboardShortcut: currentQuestionIndex hors limites', currentQuestionIndex, allQuestions.length);
+        return;
+    }
+    
+    const question = allQuestions[currentQuestionIndex];
+    if (!question) {
+        console.log('handleKeyboardShortcut: question non trouvée à l\'index', currentQuestionIndex);
+        return;
+    }
+    
+    // Traiter les raccourcis clavier
+    const key = event.key.toLowerCase();
+    let answerToSelect = null;
+    
+    switch (key) {
+        case 'o':
+            answerToSelect = 'oui';
+            break;
+        case 'n':
+            answerToSelect = 'non';
+            break;
+        case 'j':
+            answerToSelect = 'je-ne-sais-pas';
+            break;
+        case 'a':
+            answerToSelect = 'non-applicable';
+            break;
+        default:
+            return; // Touche non gérée
+    }
+    
+    console.log('handleKeyboardShortcut: touche', key, 'détectée, réponse:', answerToSelect, 'question:', question.id);
+    
+    // Empêcher le comportement par défaut
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Sauvegarder automatiquement avec la réponse directe
+    // La mise à jour visuelle se fera automatiquement lors de l'affichage de la question suivante
+    console.log('handleKeyboardShortcut: appel de saveAnswer pour question', question.id);
+    saveAnswer(question.id, question.requires_percentage, answerToSelect).catch(error => {
+        console.error('Erreur lors de la sauvegarde:', error);
+        alert(`Erreur lors de la sauvegarde: ${error.message}`);
+    });
+}
+
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
     showListView();
+    
+    // Ajouter l'écouteur d'événements pour les raccourcis clavier
+    // Utiliser window et capture pour s'assurer que l'événement est bien capturé
+    window.addEventListener('keydown', handleKeyboardShortcut, true);
+    document.addEventListener('keydown', handleKeyboardShortcut, true);
+    console.log('Écouteurs de raccourcis clavier attachés (window et document)');
 });
 

@@ -149,11 +149,22 @@ pub struct Audit {
 }
 
 impl Audit {
+    /// Crée un nouvel audit avec validation
+    /// 
+    /// # Arguments
+    /// * `name` - Nom de l'audit (ne doit pas être vide)
+    /// * `audit_type` - Type d'audit
+    /// 
+    /// # Panics
+    /// Panique si le nom est vide (devrait être validé avant l'appel)
     pub fn new(name: String, audit_type: AuditType) -> Self {
+        // Validation: le nom ne doit pas être vide
+        assert!(!name.trim().is_empty(), "Le nom de l'audit ne peut pas être vide");
+        
         let now = Utc::now();
         Self {
             id: Uuid::new_v4(),
-            name,
+            name: name.trim().to_string(),
             description: None,
             audit_type,
             project_name: None,
@@ -186,6 +197,7 @@ impl Audit {
     }
 
     /// Vérifie si une question a été répondue
+    #[allow(dead_code)]
     pub fn is_answered(&self, question_id: &Uuid) -> bool {
         self.answers.iter().any(|a| a.question_id == *question_id)
     }
@@ -201,6 +213,7 @@ impl Audit {
     }
 
     /// Obtient les questions par catégorie
+    #[allow(dead_code)]
     pub fn questions_by_category(&self, category: &Category) -> Vec<&Question> {
         self.questions
             .iter()

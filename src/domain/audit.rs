@@ -1,5 +1,7 @@
-use crate::models::*;
-use crate::storage::WebStorage;
+use crate::domain::models::*;
+use crate::infrastructure::WebStorage;
+use crate::infrastructure::Storage;
+use crate::shared::error::AppResult;
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -8,34 +10,43 @@ use uuid::Uuid;
 use std::str;
 
 /// Gestionnaire d'audits utilisant le stockage web (localStorage)
-#[derive(Default)]
-pub struct AuditManager;
+pub struct AuditManager {
+    storage: Box<dyn Storage>,
+}
+
+impl Default for AuditManager {
+    fn default() -> Self {
+        Self {
+            storage: Box::new(WebStorage),
+        }
+    }
+}
 
 impl AuditManager {
+    /// Crée un nouveau gestionnaire d'audits avec un stockage personnalisé
     #[allow(dead_code)]
-    pub fn new(_audits_dir: impl Into<String>) -> Self {
-        // Le paramètre est ignoré car on utilise localStorage
-        Self
+    pub fn with_storage(storage: Box<dyn Storage>) -> Self {
+        Self { storage }
     }
 
-    /// Sauvegarde un audit dans localStorage
-    pub fn save_audit(&self, audit: &Audit) -> Result<()> {
-        WebStorage::save_audit(audit)
+    /// Sauvegarde un audit
+    pub fn save_audit(&self, audit: &Audit) -> AppResult<()> {
+        self.storage.save_audit(audit)
     }
 
-    /// Charge un audit depuis localStorage
-    pub fn load_audit(&self, audit_id: &Uuid) -> Result<Audit> {
-        WebStorage::load_audit(audit_id)
+    /// Charge un audit depuis le stockage
+    pub fn load_audit(&self, audit_id: &Uuid) -> AppResult<Audit> {
+        self.storage.load_audit(audit_id)
     }
 
     /// Liste tous les audits disponibles
-    pub fn list_audits(&self) -> Result<Vec<Uuid>> {
-        WebStorage::list_audits()
+    pub fn list_audits(&self) -> AppResult<Vec<Uuid>> {
+        self.storage.list_audits()
     }
 
     /// Supprime un audit
-    pub fn delete_audit(&self, audit_id: &Uuid) -> Result<()> {
-        WebStorage::delete_audit(audit_id)
+    pub fn delete_audit(&self, audit_id: &Uuid) -> AppResult<()> {
+        self.storage.delete_audit(audit_id)
     }
 }
 
@@ -64,15 +75,15 @@ impl QuestionGenerator {
     #[cfg(target_arch = "wasm32")]
     fn load_questions_from_yaml(file_path: &str) -> Result<Vec<Question>> {
         let content = match file_path {
-            "questions/technique/infra.yaml" => include_str!("../questions/technique/infra.yaml"),
-            "questions/technique/db.yaml" => include_str!("../questions/technique/db.yaml"),
-            "questions/technique/operation.yaml" => include_str!("../questions/technique/operation.yaml"),
-            "questions/technique/secu.yaml" => include_str!("../questions/technique/secu.yaml"),
-            "questions/technique/a11y.yaml" => include_str!("../questions/technique/a11y.yaml"),
-            "questions/technique/archi.yaml" => include_str!("../questions/technique/archi.yaml"),
-            "questions/technique/oss.yaml" => include_str!("../questions/technique/oss.yaml"),
-            "questions/technique/devxp.yaml" => include_str!("../questions/technique/devxp.yaml"),
-            "questions/technique/produit.yaml" => include_str!("../questions/technique/produit.yaml"),
+            "questions/technique/infra.yaml" => include_str!("../../questions/technique/infra.yaml"),
+            "questions/technique/db.yaml" => include_str!("../../questions/technique/db.yaml"),
+            "questions/technique/operation.yaml" => include_str!("../../questions/technique/operation.yaml"),
+            "questions/technique/secu.yaml" => include_str!("../../questions/technique/secu.yaml"),
+            "questions/technique/a11y.yaml" => include_str!("../../questions/technique/a11y.yaml"),
+            "questions/technique/archi.yaml" => include_str!("../../questions/technique/archi.yaml"),
+            "questions/technique/oss.yaml" => include_str!("../../questions/technique/oss.yaml"),
+            "questions/technique/devxp.yaml" => include_str!("../../questions/technique/devxp.yaml"),
+            "questions/technique/produit.yaml" => include_str!("../../questions/technique/produit.yaml"),
             _ => return Err(anyhow::anyhow!("Fichier non trouvé: {}", file_path)),
         };
         Self::parse_yaml_content(content, file_path)

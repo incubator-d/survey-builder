@@ -1,15 +1,14 @@
-use crate::models::*;
+use crate::domain::models::*;
+use crate::shared::config::score_thresholds;
 use serde::Serialize;
 use std::collections::HashMap;
 use uuid::Uuid;
 
 /// Générateur de recommandations basé sur les réponses d'un audit
-#[allow(dead_code)]
 pub struct RecommendationEngine;
 
 impl RecommendationEngine {
     /// Génère des recommandations à partir des réponses d'un audit
-    #[allow(dead_code)]
     pub fn generate_recommendations(audit: &Audit) -> Vec<Recommendation> {
         let mut recommendations = Vec::new();
         let mut category_scores: HashMap<Category, (u32, u32)> = HashMap::new(); // (réponses positives, total)
@@ -46,7 +45,7 @@ impl RecommendationEngine {
         for (category, (positive, total)) in category_scores {
             if total > 0 {
                 let score = (positive as f64 / total as f64) * 100.0;
-                if score < 50.0 {
+                if score < score_thresholds::CATEGORY_RECOMMENDATION_THRESHOLD {
                     recommendations.push(Recommendation {
                         id: Uuid::new_v4(),
                         title: format!("Améliorer la catégorie {}", category),
@@ -55,9 +54,9 @@ impl RecommendationEngine {
                             category, score
                         ),
                         category: category.clone(),
-                        priority: if score < 25.0 {
+                        priority: if score < score_thresholds::CRITICAL_PRIORITY_THRESHOLD {
                             Priority::Critique
-                        } else if score < 40.0 {
+                        } else if score < score_thresholds::HIGH_PRIORITY_THRESHOLD {
                             Priority::Elevee
                         } else {
                             Priority::Moyenne
@@ -77,7 +76,6 @@ impl RecommendationEngine {
     }
 
     /// Calcule la priorité d'une recommandation basée sur la catégorie et la réponse
-    #[allow(dead_code)]
     fn calculate_priority(category: &Category, answer: &Answer) -> Priority {
         match (category, answer) {
             // Sécurité et infrastructure sont critiques
@@ -91,7 +89,6 @@ impl RecommendationEngine {
     }
 
     /// Génère un rapport de synthèse de l'audit
-    #[allow(dead_code)]
     pub fn generate_summary(audit: &Audit) -> AuditSummary {
         let mut category_stats: HashMap<Category, CategoryStats> = HashMap::new();
 
@@ -138,7 +135,6 @@ pub struct CategoryStats {
 }
 
 impl CategoryStats {
-    #[allow(dead_code)]
     pub fn completion_percentage(&self) -> f64 {
         if self.total_questions == 0 {
             return 0.0;
@@ -146,7 +142,6 @@ impl CategoryStats {
         (self.answered as f64 / self.total_questions as f64) * 100.0
     }
 
-    #[allow(dead_code)]
     pub fn positive_percentage(&self) -> f64 {
         if self.answered == 0 {
             return 0.0;
