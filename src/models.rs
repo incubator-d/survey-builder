@@ -209,4 +209,277 @@ impl Audit {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_audit_new() {
+        let audit = Audit::new("Test Audit".to_string(), AuditType::Technique);
+        assert_eq!(audit.name, "Test Audit");
+        assert_eq!(audit.audit_type, AuditType::Technique);
+        assert_eq!(audit.questions.len(), 0);
+        assert_eq!(audit.answers.len(), 0);
+    }
+
+    #[test]
+    fn test_audit_add_question() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        let question = Question {
+            id: Uuid::new_v4(),
+            text: "Test question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question.clone());
+        assert_eq!(audit.questions.len(), 1);
+        assert_eq!(audit.questions[0].text, "Test question");
+    }
+
+    #[test]
+    fn test_audit_answer_question() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        let question_id = Uuid::new_v4();
+        let question = Question {
+            id: question_id,
+            text: "Test question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question);
+        
+        let answer = QuestionAnswer {
+            question_id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: None,
+            answered_at: Utc::now(),
+        };
+        
+        audit.answer_question(answer);
+        assert_eq!(audit.answers.len(), 1);
+        assert!(audit.is_answered(&question_id));
+    }
+
+    #[test]
+    fn test_audit_get_answer() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        let question_id = Uuid::new_v4();
+        let question = Question {
+            id: question_id,
+            text: "Test question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question);
+        
+        let answer = QuestionAnswer {
+            question_id,
+            answer: Answer::Non,
+            percentage: None,
+            comment: Some("Test comment".to_string()),
+            answered_at: Utc::now(),
+        };
+        
+        audit.answer_question(answer.clone());
+        
+        let retrieved = audit.get_answer(&question_id);
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().answer, Answer::Non);
+        assert_eq!(retrieved.unwrap().comment.as_ref().unwrap(), "Test comment");
+    }
+
+    #[test]
+    fn test_audit_completion_percentage() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        
+        // Audit vide
+        assert_eq!(audit.completion_percentage(), 0.0);
+        
+        // Ajouter 3 questions
+        for i in 0..3 {
+            let question = Question {
+                id: Uuid::new_v4(),
+                text: format!("Question {}", i),
+                description: None,
+                category: Category::Infra,
+                audit_type: AuditType::Technique,
+                requires_percentage: false,
+                expected_answer: None,
+                links: Vec::new(),
+            };
+            audit.add_question(question);
+        }
+        
+        // 0% complété
+        assert_eq!(audit.completion_percentage(), 0.0);
+        
+        // Répondre à 1 question sur 3
+        let answer = QuestionAnswer {
+            question_id: audit.questions[0].id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: None,
+            answered_at: Utc::now(),
+        };
+        audit.answer_question(answer);
+        
+        // ~33.3% complété
+        let completion = audit.completion_percentage();
+        assert!(completion > 33.0 && completion < 34.0);
+        
+        // Répondre à toutes les questions
+        let question_ids: Vec<Uuid> = audit.questions[1..].iter().map(|q| q.id).collect();
+        for question_id in question_ids {
+            let answer = QuestionAnswer {
+                question_id,
+                answer: Answer::Oui,
+                percentage: None,
+                comment: None,
+                answered_at: Utc::now(),
+            };
+            audit.answer_question(answer);
+        }
+        
+        // 100% complété
+        assert_eq!(audit.completion_percentage(), 100.0);
+    }
+
+    #[test]
+    fn test_audit_questions_by_category() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        
+        // Ajouter des questions de différentes catégories
+        let infra_question = Question {
+            id: Uuid::new_v4(),
+            text: "Infra question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        let secu_question = Question {
+            id: Uuid::new_v4(),
+            text: "Secu question".to_string(),
+            description: None,
+            category: Category::Secu,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(infra_question);
+        audit.add_question(secu_question);
+        
+        let infra_questions = audit.questions_by_category(&Category::Infra);
+        assert_eq!(infra_questions.len(), 1);
+        assert_eq!(infra_questions[0].text, "Infra question");
+        
+        let secu_questions = audit.questions_by_category(&Category::Secu);
+        assert_eq!(secu_questions.len(), 1);
+        assert_eq!(secu_questions[0].text, "Secu question");
+    }
+
+    #[test]
+    fn test_audit_replace_answer() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        let question_id = Uuid::new_v4();
+        let question = Question {
+            id: question_id,
+            text: "Test question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question);
+        
+        // Première réponse
+        let answer1 = QuestionAnswer {
+            question_id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: None,
+            answered_at: Utc::now(),
+        };
+        audit.answer_question(answer1);
+        assert_eq!(audit.answers.len(), 1);
+        assert_eq!(audit.get_answer(&question_id).unwrap().answer, Answer::Oui);
+        
+        // Remplacer par une nouvelle réponse
+        let answer2 = QuestionAnswer {
+            question_id,
+            answer: Answer::Non,
+            percentage: None,
+            comment: None,
+            answered_at: Utc::now(),
+        };
+        audit.answer_question(answer2);
+        assert_eq!(audit.answers.len(), 1); // Toujours une seule réponse
+        assert_eq!(audit.get_answer(&question_id).unwrap().answer, Answer::Non);
+    }
+
+    #[test]
+    fn test_audit_type_display() {
+        assert_eq!(format!("{}", AuditType::Technique), "Technique");
+        assert_eq!(format!("{}", AuditType::Business), "Business");
+        assert_eq!(format!("{}", AuditType::Marketing), "Marketing");
+        assert_eq!(format!("{}", AuditType::Autre("Custom".to_string())), "Custom");
+    }
+
+    #[test]
+    fn test_category_display() {
+        assert_eq!(format!("{}", Category::Infra), "Infra");
+        assert_eq!(format!("{}", Category::Operation), "Opération");
+        assert_eq!(format!("{}", Category::DB), "DB");
+        assert_eq!(format!("{}", Category::Secu), "Sécu");
+        assert_eq!(format!("{}", Category::Autre("Custom".to_string())), "Custom");
+    }
+
+    #[test]
+    fn test_answer_display() {
+        assert_eq!(format!("{}", Answer::Oui), "Oui");
+        assert_eq!(format!("{}", Answer::Non), "Non");
+        assert_eq!(format!("{}", Answer::JeNeSaisPas), "Je ne sais pas");
+        assert_eq!(format!("{}", Answer::NonApplicable), "Non applicable");
+    }
+
+    #[test]
+    fn test_priority_display() {
+        assert_eq!(format!("{}", Priority::Faible), "Faible");
+        assert_eq!(format!("{}", Priority::Moyenne), "Moyenne");
+        assert_eq!(format!("{}", Priority::Elevee), "Élevée");
+        assert_eq!(format!("{}", Priority::Critique), "Critique");
+    }
+
+    #[test]
+    fn test_priority_ordering() {
+        assert!(Priority::Critique > Priority::Elevee);
+        assert!(Priority::Elevee > Priority::Moyenne);
+        assert!(Priority::Moyenne > Priority::Faible);
+    }
+}
+
 

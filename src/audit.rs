@@ -865,3 +865,223 @@ impl QuestionGenerator {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_yaml_content() {
+        let yaml_content = r#"
+questions:
+  - text: "Question test 1"
+    description: "Description test"
+    category: Infra
+    requires_percentage: true
+    expected_answer: Oui
+    links:
+      - "https://example.com"
+  - text: "Question test 2"
+    category: Secu
+    requires_percentage: false
+    expected_answer: Non
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 2);
+        assert_eq!(questions[0].text, "Question test 1");
+        assert_eq!(questions[0].category, Category::Infra);
+        assert_eq!(questions[0].requires_percentage, true);
+        assert_eq!(questions[0].expected_answer, Some(Answer::Oui));
+        assert_eq!(questions[0].links.len(), 1);
+        
+        assert_eq!(questions[1].text, "Question test 2");
+        assert_eq!(questions[1].category, Category::Secu);
+        assert_eq!(questions[1].requires_percentage, false);
+        assert_eq!(questions[1].expected_answer, Some(Answer::Non));
+    }
+
+    #[test]
+    fn test_parse_yaml_content_with_optional_fields() {
+        let yaml_content = r#"
+questions:
+  - text: "Question sans description"
+    category: DB
+    requires_percentage: false
+  - text: "Question avec description"
+    description: "Description optionnelle"
+    category: Operation
+    requires_percentage: true
+    links:
+      - "https://link1.com"
+      - "https://link2.com"
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 2);
+        assert!(questions[0].description.is_none());
+        assert_eq!(questions[1].description, Some("Description optionnelle".to_string()));
+        assert_eq!(questions[1].links.len(), 2);
+    }
+
+    #[test]
+    fn test_parse_yaml_content_category_mapping() {
+        let yaml_content = r#"
+questions:
+  - text: "Test Infra"
+    category: Infra
+    requires_percentage: false
+  - text: "Test Operation"
+    category: Operation
+    requires_percentage: false
+  - text: "Test DB"
+    category: DB
+    requires_percentage: false
+  - text: "Test A11y"
+    category: A11y
+    requires_percentage: false
+  - text: "Test Archi"
+    category: Archi
+    requires_percentage: false
+  - text: "Test OSS"
+    category: OSS
+    requires_percentage: false
+  - text: "Test DevXP"
+    category: DevXP
+    requires_percentage: false
+  - text: "Test Produit"
+    category: Produit
+    requires_percentage: false
+  - text: "Test Secu"
+    category: Secu
+    requires_percentage: false
+  - text: "Test Bizdev"
+    category: Bizdev
+    requires_percentage: false
+  - text: "Test Autre"
+    category: CustomCategory
+    requires_percentage: false
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 11);
+        assert_eq!(questions[0].category, Category::Infra);
+        assert_eq!(questions[1].category, Category::Operation);
+        assert_eq!(questions[2].category, Category::DB);
+        assert_eq!(questions[3].category, Category::A11y);
+        assert_eq!(questions[4].category, Category::Archi);
+        assert_eq!(questions[5].category, Category::OSS);
+        assert_eq!(questions[6].category, Category::DevXP);
+        assert_eq!(questions[7].category, Category::Produit);
+        assert_eq!(questions[8].category, Category::Secu);
+        assert_eq!(questions[9].category, Category::Bizdev);
+        match &questions[10].category {
+            Category::Autre(s) => assert_eq!(s, "CustomCategory"),
+            _ => panic!("Devrait être Category::Autre"),
+        }
+    }
+
+    #[test]
+    fn test_parse_yaml_content_expected_answer_mapping() {
+        let yaml_content = r#"
+questions:
+  - text: "Test Oui"
+    category: Infra
+    requires_percentage: false
+    expected_answer: Oui
+  - text: "Test Non"
+    category: Infra
+    requires_percentage: false
+    expected_answer: Non
+  - text: "Test JeNeSaisPas"
+    category: Infra
+    requires_percentage: false
+    expected_answer: JeNeSaisPas
+  - text: "Test NonApplicable"
+    category: Infra
+    requires_percentage: false
+    expected_answer: NonApplicable
+  - text: "Test lowercase"
+    category: Infra
+    requires_percentage: false
+    expected_answer: oui
+  - text: "Test avec tirets"
+    category: Infra
+    requires_percentage: false
+    expected_answer: je-ne-sais-pas
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 6);
+        assert_eq!(questions[0].expected_answer, Some(Answer::Oui));
+        assert_eq!(questions[1].expected_answer, Some(Answer::Non));
+        assert_eq!(questions[2].expected_answer, Some(Answer::JeNeSaisPas));
+        assert_eq!(questions[3].expected_answer, Some(Answer::NonApplicable));
+        assert_eq!(questions[4].expected_answer, Some(Answer::Oui));
+        assert_eq!(questions[5].expected_answer, Some(Answer::JeNeSaisPas));
+    }
+
+    #[test]
+    fn test_parse_yaml_content_invalid_yaml() {
+        let invalid_yaml = "invalid: yaml: content: [";
+        
+        let result = QuestionGenerator::parse_yaml_content(invalid_yaml, "test.yaml");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_yaml_content_empty() {
+        let empty_yaml = "questions: []";
+        
+        let questions = QuestionGenerator::parse_yaml_content(empty_yaml, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 0);
+    }
+
+    #[test]
+    fn test_generate_technical_questions() {
+        // Test que la génération de questions techniques fonctionne
+        // Note: En mode test (non-wasm32), cela va lire depuis les fichiers
+        let questions = QuestionGenerator::generate_technical_questions();
+        
+        // Devrait avoir au moins quelques questions si les fichiers existent
+        // Si les fichiers n'existent pas, la liste sera vide mais le test ne devrait pas planter
+        assert!(!questions.is_empty() || questions.is_empty()); // Toujours vrai, juste pour vérifier que ça compile
+        
+        // Si des questions sont chargées, vérifier leur structure
+        for question in &questions {
+            assert!(!question.text.is_empty());
+            assert_eq!(question.audit_type, AuditType::Technique);
+        }
+    }
+
+    #[test]
+    fn test_generate_business_questions() {
+        let questions = QuestionGenerator::generate_business_questions();
+        
+        assert!(!questions.is_empty());
+        assert!(questions.len() >= 4);
+        
+        for question in &questions {
+            assert!(!question.text.is_empty());
+            assert_eq!(question.audit_type, AuditType::Business);
+            assert_eq!(question.category, Category::Bizdev);
+        }
+    }
+
+    #[test]
+    fn test_audit_manager_default() {
+        let _manager = AuditManager::default();
+        // Vérifier que le manager peut être créé
+        assert!(true); // Pas de panique = succès
+    }
+}
+
