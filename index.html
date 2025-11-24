@@ -62,6 +62,27 @@
           document.body.focus();
         }
       });
+      
+      // Gérer l'import de fichiers YAML
+      document.addEventListener("change", async (e) => {
+        if (e.target.type === "file" && e.target.accept.includes("yaml")) {
+          const file = e.target.files[0];
+          if (file) {
+            try {
+              const text = await file.text();
+              if (window.wasmBindings && window.wasmBindings.process_yaml_import) {
+                window.wasmBindings.process_yaml_import(text);
+                // Retirer l'input du DOM après utilisation
+                e.target.remove();
+              } else {
+                console.error("Fonction process_yaml_import non disponible");
+              }
+            } catch (error) {
+              console.error("Erreur lors de la lecture du fichier:", error);
+            }
+          }
+        }
+      });
     </script>
   </body>
 </html>

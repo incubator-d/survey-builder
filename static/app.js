@@ -260,12 +260,37 @@ async function loadAudit(auditId) {
         const completion = calculateCompletion(audit);
         document.getElementById('completion').textContent = `${completion.toFixed(1)}%`;
 
-        // Trier toutes les questions par catégorie puis par ordre
-        allQuestions = audit.questions.sort((a, b) => {
-            if (a.category !== b.category) {
-                return a.category.localeCompare(b.category);
+        // Fonction pour obtenir le nom de la catégorie (gère les objets enum Rust)
+        function getCategoryName(category) {
+            if (typeof category === 'string') {
+                return category;
             }
-            return 0;
+            if (typeof category === 'object' && category !== null) {
+                const keys = Object.keys(category);
+                if (keys.length > 0) {
+                    const firstKey = keys[0];
+                    if (category[firstKey] && typeof category[firstKey] === 'string') {
+                        return category[firstKey];
+                    }
+                    return firstKey;
+                }
+            }
+            return String(category);
+        }
+        
+        // Ordre de tri des catégories
+        const categoryOrder = ['Infra', 'Operation', 'DB', 'Secu', 'A11y', 'Archi', 'OSS', 'DevXP', 'Produit', 'Bizdev', 'Intra', 'Organisation'];
+        
+        // Trier toutes les questions par catégorie
+        allQuestions = audit.questions.sort((a, b) => {
+            const aName = getCategoryName(a.category);
+            const bName = getCategoryName(b.category);
+            const aIndex = categoryOrder.findIndex(cat => aName === cat || aName.includes(cat) || cat.includes(aName));
+            const bIndex = categoryOrder.findIndex(cat => bName === cat || bName.includes(cat) || cat.includes(bName));
+            const aPos = aIndex !== -1 ? aIndex : 999;
+            const bPos = bIndex !== -1 ? bIndex : 999;
+            if (aPos !== bPos) return aPos - bPos;
+            return aName.localeCompare(bName);
         });
 
         // Réinitialiser l'index si nécessaire
@@ -524,12 +549,37 @@ async function saveAnswer(questionId, requiresPercentage, directAnswer = null) {
 
         currentAudit = updatedAudit;
         
+        // Fonction pour obtenir le nom de la catégorie (gère les objets enum Rust)
+        function getCategoryName(category) {
+            if (typeof category === 'string') {
+                return category;
+            }
+            if (typeof category === 'object' && category !== null) {
+                const keys = Object.keys(category);
+                if (keys.length > 0) {
+                    const firstKey = keys[0];
+                    if (category[firstKey] && typeof category[firstKey] === 'string') {
+                        return category[firstKey];
+                    }
+                    return firstKey;
+                }
+            }
+            return String(category);
+        }
+        
+        // Ordre de tri des catégories
+        const categoryOrder = ['Infra', 'Operation', 'DB', 'Secu', 'A11y', 'Archi', 'OSS', 'DevXP', 'Produit', 'Bizdev', 'Intra', 'Organisation'];
+        
         // Mettre à jour allQuestions avec les questions de l'audit mis à jour (au cas où elles auraient changé)
         allQuestions = updatedAudit.questions.sort((a, b) => {
-            if (a.category !== b.category) {
-                return a.category.localeCompare(b.category);
-            }
-            return 0;
+            const aName = getCategoryName(a.category);
+            const bName = getCategoryName(b.category);
+            const aIndex = categoryOrder.findIndex(cat => aName === cat || aName.includes(cat) || cat.includes(aName));
+            const bIndex = categoryOrder.findIndex(cat => bName === cat || bName.includes(cat) || cat.includes(bName));
+            const aPos = aIndex !== -1 ? aIndex : 999;
+            const bPos = bIndex !== -1 ? bIndex : 999;
+            if (aPos !== bPos) return aPos - bPos;
+            return aName.localeCompare(bName);
         });
         
         // Mettre à jour les réponses dans l'audit
@@ -645,13 +695,14 @@ async function loadRadarChart(auditId) {
                 'DevXP': 'Dev XP',
                 'Produit': 'Produit',
                 'Bizdev': 'Bizdev',
-                'Intra': 'Intra'
+                'Intra': 'Intra',
+                'Organisation': 'Organisation'
             };
             return categoryMap[categoryName] || categoryName;
         }
         
         // Trier les catégories pour un affichage cohérent
-        const categoryOrder = ['Infra', 'Operation', 'DB', 'Secu', 'A11y', 'Archi', 'OSS', 'DevXP', 'Produit', 'Bizdev', 'Intra'];
+        const categoryOrder = ['Infra', 'Operation', 'DB', 'Secu', 'A11y', 'Archi', 'OSS', 'DevXP', 'Produit', 'Bizdev', 'Intra', 'Organisation'];
         
         // Créer une copie pour ne pas modifier l'original
         const sortedStats = [...summary.category_stats].sort((a, b) => {

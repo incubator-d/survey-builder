@@ -36,6 +36,7 @@ pub enum Category {
     Produit,
     Secu, // Sécurité
     Bizdev,
+    Organisation,
     Autre(String),
 }
 
@@ -53,6 +54,7 @@ impl std::fmt::Display for Category {
             Category::Produit => write!(f, "Produit"),
             Category::Secu => write!(f, "Sécu"),
             Category::Bizdev => write!(f, "Bizdev"),
+            Category::Organisation => write!(f, "Organisation"),
             Category::Autre(s) => write!(f, "{}", s),
         }
     }
@@ -467,7 +469,15 @@ mod tests {
         assert_eq!(format!("{}", Category::Infra), "Infra");
         assert_eq!(format!("{}", Category::Operation), "Opération");
         assert_eq!(format!("{}", Category::DB), "DB");
+        assert_eq!(format!("{}", Category::A11y), "A11y");
+        assert_eq!(format!("{}", Category::Archi), "Archi");
+        assert_eq!(format!("{}", Category::Intra), "Intra");
+        assert_eq!(format!("{}", Category::OSS), "OSS");
+        assert_eq!(format!("{}", Category::DevXP), "Dev XP");
+        assert_eq!(format!("{}", Category::Produit), "Produit");
         assert_eq!(format!("{}", Category::Secu), "Sécu");
+        assert_eq!(format!("{}", Category::Bizdev), "Bizdev");
+        assert_eq!(format!("{}", Category::Organisation), "Organisation");
         assert_eq!(format!("{}", Category::Autre("Custom".to_string())), "Custom");
     }
 
@@ -492,6 +502,24 @@ mod tests {
         assert!(Priority::Critique > Priority::Elevee);
         assert!(Priority::Elevee > Priority::Moyenne);
         assert!(Priority::Moyenne > Priority::Faible);
+    }
+
+    #[test]
+    #[should_panic(expected = "Le nom de l'audit ne peut pas être vide")]
+    fn test_audit_new_empty_name() {
+        let _ = Audit::new("".to_string(), AuditType::Technique);
+    }
+
+    #[test]
+    #[should_panic(expected = "Le nom de l'audit ne peut pas être vide")]
+    fn test_audit_new_whitespace_name() {
+        let _ = Audit::new("   ".to_string(), AuditType::Technique);
+    }
+
+    #[test]
+    fn test_audit_new_trims_name() {
+        let audit = Audit::new("  Test Audit  ".to_string(), AuditType::Technique);
+        assert_eq!(audit.name, "Test Audit");
     }
 }
 

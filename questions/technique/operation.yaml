@@ -58,6 +58,12 @@ questions:
     category: Operation
     requires_percentage: false
     expected_answer: Oui
+  
+  - text: "Suivez-vous activement des métriques clés (performance, erreurs, disponibilité, business) avec dashboards dédiés ?"
+    description: "Métriques suivies régulièrement avec dashboards et alertes. Essentiel pour détecter les problèmes et prendre des décisions data-driven."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
 
 
 

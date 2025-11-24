@@ -61,6 +61,12 @@ questions:
     category: Infra
     requires_percentage: false
     expected_answer: Oui
+  
+  - text: "Avez-vous une documentation infrastructure complète (diagrammes réseau, procédures de déploiement, runbooks) ?"
+    description: "Documentation détaillée de l'infrastructure : architecture réseau, procédures opérationnelles, runbooks pour les opérations courantes. Essentiel pour la maintenance et l'onboarding."
+    category: Infra
+    requires_percentage: false
+    expected_answer: Oui
 
 
 

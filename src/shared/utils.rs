@@ -33,3 +33,126 @@ pub fn calculate_global_score(audit: &Audit) -> Option<f64> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::models::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn test_calculate_global_score_empty_audit() {
+        let audit = Audit::new("Test".to_string(), AuditType::Technique);
+        let score = calculate_global_score(&audit);
+        assert_eq!(score, None);
+    }
+
+    #[test]
+    fn test_calculate_global_score_with_answers() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        
+        // Ajouter des questions
+        let question1 = Question {
+            id: Uuid::new_v4(),
+            text: "Question 1".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        let question2 = Question {
+            id: Uuid::new_v4(),
+            text: "Question 2".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question1.clone());
+        audit.add_question(question2.clone());
+        
+        // Répondre "Oui" à la première, "Non" à la seconde
+        audit.answer_question(QuestionAnswer {
+            question_id: question1.id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: None,
+            answered_at: chrono::Utc::now(),
+        });
+        audit.answer_question(QuestionAnswer {
+            question_id: question2.id,
+            answer: Answer::Non,
+            percentage: None,
+            comment: None,
+            answered_at: chrono::Utc::now(),
+        });
+        
+        let score = calculate_global_score(&audit);
+        assert!(score.is_some());
+        // 1 positif sur 2 réponses = 50%
+        assert_eq!(score.unwrap(), 50.0);
+    }
+
+    #[test]
+    fn test_calculate_global_score_all_positive() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        
+        let question = Question {
+            id: Uuid::new_v4(),
+            text: "Question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question.clone());
+        audit.answer_question(QuestionAnswer {
+            question_id: question.id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: None,
+            answered_at: chrono::Utc::now(),
+        });
+        
+        let score = calculate_global_score(&audit);
+        assert!(score.is_some());
+        assert_eq!(score.unwrap(), 100.0);
+    }
+
+    #[test]
+    fn test_calculate_global_score_all_negative() {
+        let mut audit = Audit::new("Test".to_string(), AuditType::Technique);
+        
+        let question = Question {
+            id: Uuid::new_v4(),
+            text: "Question".to_string(),
+            description: None,
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: None,
+            links: Vec::new(),
+        };
+        
+        audit.add_question(question.clone());
+        audit.answer_question(QuestionAnswer {
+            question_id: question.id,
+            answer: Answer::Non,
+            percentage: None,
+            comment: None,
+            answered_at: chrono::Utc::now(),
+        });
+        
+        let score = calculate_global_score(&audit);
+        assert!(score.is_some());
+        assert_eq!(score.unwrap(), 0.0);
+    }
+}
+

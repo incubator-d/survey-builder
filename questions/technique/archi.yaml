@@ -23,6 +23,12 @@ questions:
     requires_percentage: false
     expected_answer: Oui
   
+  - text: "Votre documentation API inclut-elle des exemples d'utilisation, schémas de données, et cas d'erreur ?"
+    description: "Documentation API complète avec exemples concrets, schémas de requêtes/réponses, et gestion d'erreurs. Essentiel pour faciliter l'intégration."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
   - text: "Utilisez-vous des patterns de design appropriés pour votre contexte (Repository, Factory, Strategy, etc.) ?"
     description: "Patterns adaptés au domaine métier et aux contraintes techniques. Améliore la maintenabilité et la testabilité."
     category: Archi

@@ -75,6 +75,16 @@ questions:
     category: Secu
     requires_percentage: false
     expected_answer: Oui
+  
+  - text: "Avez-vous un processus automatisé de scan et de mise à jour des dépendances pour détecter les vulnérabilités (Dependabot, Renovate, Snyk) ?"
+    description: "Scan automatique des dépendances, alertes sur les vulnérabilités, et propositions de mises à jour. Critique pour maintenir la sécurité à jour."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+    links:
+      - "https://docs.github.com/en/code-security/dependabot"
+      - "https://www.mend.io/renovate/"
+      - "https://snyk.io/"
 
 
 

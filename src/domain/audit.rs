@@ -84,6 +84,7 @@ impl QuestionGenerator {
             "questions/technique/oss.yaml" => include_str!("../../questions/technique/oss.yaml"),
             "questions/technique/devxp.yaml" => include_str!("../../questions/technique/devxp.yaml"),
             "questions/technique/produit.yaml" => include_str!("../../questions/technique/produit.yaml"),
+            "questions/technique/organisation.yaml" => include_str!("../../questions/technique/organisation.yaml"),
             _ => return Err(anyhow::anyhow!("Fichier non trouvé: {}", file_path)),
         };
         Self::parse_yaml_content(content, file_path)
@@ -117,6 +118,7 @@ impl QuestionGenerator {
                 "Produit" => Category::Produit,
                 "Secu" => Category::Secu,
                 "Bizdev" => Category::Bizdev,
+                "Organisation" => Category::Organisation,
                 other => Category::Autre(other.to_string()),
             };
             
@@ -160,6 +162,7 @@ impl QuestionGenerator {
             "questions/technique/oss.yaml",
             "questions/technique/devxp.yaml",
             "questions/technique/produit.yaml",
+            "questions/technique/organisation.yaml",
         ];
         
         // Charge les questions depuis chaque fichier
@@ -448,6 +451,82 @@ questions:
         let _manager = AuditManager::default();
         // Vérifier que le manager peut être créé
         assert!(true); // Pas de panique = succès
+    }
+
+    // Mock storage pour les tests
+    struct MockStorage {
+        audits: std::collections::HashMap<uuid::Uuid, Audit>,
+    }
+
+    impl crate::infrastructure::storage_trait::Storage for MockStorage {
+        fn save_audit(&self, _audit: &Audit) -> crate::shared::error::AppResult<()> {
+            // Dans un vrai mock, on devrait utiliser RefCell ou Mutex
+            // Pour simplifier, on ne fait rien ici car on ne peut pas muter
+            Ok(())
+        }
+
+        fn load_audit(&self, audit_id: &uuid::Uuid) -> crate::shared::error::AppResult<Audit> {
+            self.audits.get(audit_id)
+                .cloned()
+                .ok_or_else(|| crate::shared::error::AppError::Load("Audit non trouvé".to_string()))
+        }
+
+        fn list_audits(&self) -> crate::shared::error::AppResult<Vec<uuid::Uuid>> {
+            Ok(self.audits.keys().cloned().collect())
+        }
+
+        fn delete_audit(&self, _audit_id: &uuid::Uuid) -> crate::shared::error::AppResult<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_audit_manager_with_storage() {
+        use std::collections::HashMap;
+        
+        let mock_storage = MockStorage {
+            audits: HashMap::new(),
+        };
+        let _manager = AuditManager::with_storage(Box::new(mock_storage));
+        
+        // Vérifier que le manager peut être créé avec un storage personnalisé
+        assert!(true); // Pas de panique = succès
+    }
+
+    #[test]
+    fn test_parse_yaml_content_with_organisation_category() {
+        let yaml_content = r#"
+questions:
+  - text: "Test Organisation"
+    category: Organisation
+    requires_percentage: false
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 1);
+        assert_eq!(questions[0].category, Category::Organisation);
+    }
+
+    #[test]
+    fn test_parse_yaml_content_with_intra_category() {
+        let yaml_content = r#"
+questions:
+  - text: "Test Intra"
+    category: Intra
+    requires_percentage: false
+"#;
+        
+        let questions = QuestionGenerator::parse_yaml_content(yaml_content, "test.yaml")
+            .expect("Le parsing YAML devrait fonctionner");
+        
+        assert_eq!(questions.len(), 1);
+        // "Intra" n'est pas dans le mapping, donc il est traité comme "Autre"
+        match &questions[0].category {
+            Category::Autre(s) => assert_eq!(s, "Intra"),
+            _ => panic!("Devrait être Category::Autre(\"Intra\")"),
+        }
     }
 }
 

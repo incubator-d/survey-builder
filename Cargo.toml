@@ -19,5 +19,6 @@ anyhow = "1.0"
 thiserror = "1.0"
 ratzilla = "0.2"
 wasm-bindgen = "0.2"
-web-sys = { version = "0.3", features = ["Window", "Storage", "console"] }
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["Window", "Storage", "console", "Document", "HtmlElement", "HtmlAnchorElement", "HtmlInputElement", "Url", "Blob", "BlobPropertyBag", "CssStyleDeclaration"] }
 

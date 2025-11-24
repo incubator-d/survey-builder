@@ -15,6 +15,7 @@ Chaque fichier YAML contient une liste de questions pour une catégorie spécifi
 - `oss.yaml` - Open Source
 - `devxp.yaml` - Developer Experience
 - `produit.yaml` - Produit et expérience utilisateur
+- `organisation.yaml` - Organisation, processus et gestion des connaissances
 
 ## Format des questions
 

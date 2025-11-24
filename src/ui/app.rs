@@ -13,6 +13,14 @@ use ratzilla::ratatui::{
 
 use crate::domain::{AuditManager, QuestionGenerator, RecommendationEngine, *};
 use crate::shared::{AUDIT_TYPES, answer_inputs, score_thresholds, scroll, calculate_global_score};
+use serde::{Deserialize, Serialize};
+
+#[cfg(target_arch = "wasm32")]
+use web_sys::{window, HtmlAnchorElement, Url, HtmlInputElement};
+#[cfg(target_arch = "wasm32")]
+use js_sys;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
 /// État principal de l'application
 /// 
@@ -35,6 +43,8 @@ pub struct AppState {
     pub summary_scroll: usize, // Index de scroll pour le résumé des catégories
     pub recommendations_scroll: usize, // Index de scroll pour les recommandations
     pub error_message: Option<String>, // Message d'erreur à afficher à l'utilisateur
+    pub pending_delete_audit_id: Option<uuid::Uuid>, // ID de l'audit en attente de suppression
+    pub import_file_input_id: Option<String>, // ID de l'input file pour l'import
 }
 
 /// Vues disponibles dans l'application
@@ -224,25 +234,652 @@ impl AppState {
         if self.view == View::List && !self.audits.is_empty() {
             let index = self.selected_audit_index;
             if index < self.audits.len() {
+                // Si une suppression est déjà en attente, on annule
+                if self.pending_delete_audit_id.is_some() {
+                    self.cancel_delete();
+                    return;
+                }
+                // Sinon, on demande confirmation
                 let audit_id = self.audits[index].id;
-                match self.audit_manager.delete_audit(&audit_id) {
-                    Ok(()) => {
-                        self.load_audits();
-                        // Ajuster l'index après suppression
-                        if !self.audits.is_empty() {
-                            if self.selected_audit_index >= self.audits.len() {
-                                self.selected_audit_index = self.audits.len() - 1;
-                            }
-                        } else {
-                            self.selected_audit_index = 0;
+                self.pending_delete_audit_id = Some(audit_id);
+            }
+        }
+    }
+
+    pub fn confirm_delete(&mut self) {
+        if let Some(audit_id) = self.pending_delete_audit_id.take() {
+            match self.audit_manager.delete_audit(&audit_id) {
+                Ok(()) => {
+                    self.load_audits();
+                    // Ajuster l'index après suppression
+                    if !self.audits.is_empty() {
+                        if self.selected_audit_index >= self.audits.len() {
+                            self.selected_audit_index = self.audits.len() - 1;
                         }
+                    } else {
+                        self.selected_audit_index = 0;
                     }
-                    Err(e) => {
-                        self.error_message = Some(format!("Erreur lors de la suppression: {}", e));
+                }
+                Err(e) => {
+                    self.error_message = Some(format!("Erreur lors de la suppression: {}", e));
+                }
+            }
+        }
+    }
+
+    pub fn cancel_delete(&mut self) {
+        self.pending_delete_audit_id = None;
+    }
+
+    /// Exporte l'audit actuel ou sélectionné au format TXT
+    pub fn export_audit_to_txt(&mut self) {
+        let audit = self.get_current_audit_for_recommendations();
+        if let Some(audit) = audit {
+            let text = self.generate_audit_text(audit);
+            self.download_text_file(&text, &format!("audit_{}_{}.txt", 
+                audit.name.replace(" ", "_"), 
+                audit.id.to_string().chars().take(8).collect::<String>()));
+        } else {
+            self.error_message = Some("Aucun audit sélectionné pour l'export".to_string());
+        }
+    }
+
+    /// Génère le texte formaté de l'audit complet
+    fn generate_audit_text(&self, audit: &Audit) -> String {
+        let mut text = String::new();
+        
+        // En-tête
+        text.push_str("═══════════════════════════════════════════════════════════════\n");
+        text.push_str(&format!("RAPPORT D'AUDIT: {}\n", audit.name));
+        text.push_str("═══════════════════════════════════════════════════════════════\n\n");
+        
+        // Informations générales
+        text.push_str("INFORMATIONS GÉNÉRALES\n");
+        text.push_str("───────────────────────────────────────────────────────────────\n");
+        text.push_str(&format!("Type d'audit: {}\n", audit.audit_type));
+        if let Some(ref project) = audit.project_name {
+            text.push_str(&format!("Projet: {}\n", project));
+        }
+        if let Some(ref product) = audit.product_name {
+            text.push_str(&format!("Produit: {}\n", product));
+        }
+        text.push_str(&format!("Date de création: {}\n", audit.created_at.format("%d/%m/%Y %H:%M:%S UTC")));
+        text.push_str(&format!("Dernière mise à jour: {}\n", audit.updated_at.format("%d/%m/%Y %H:%M:%S UTC")));
+        text.push_str(&format!("Complétion: {:.1}%\n", audit.completion_percentage()));
+        
+        // Score global
+        if let Some(score) = calculate_global_score(audit) {
+            text.push_str(&format!("Score global: {:.1}%\n", score));
+        } else {
+            text.push_str("Score global: N/A (aucune réponse)\n");
+        }
+        text.push_str("\n");
+        
+        // Résumé par catégorie
+        let summary = RecommendationEngine::generate_summary(audit);
+        text.push_str("RÉSUMÉ PAR CATÉGORIE\n");
+        text.push_str("───────────────────────────────────────────────────────────────\n");
+        
+        // Trier les catégories par pourcentage positif (décroissant)
+        let mut sorted_stats: Vec<_> = summary.category_stats.iter().collect();
+        sorted_stats.sort_by(|a, b| {
+            b.positive_percentage().partial_cmp(&a.positive_percentage())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        
+        for stats in &sorted_stats {
+            text.push_str(&format!("\nCatégorie: {}\n", stats.category));
+            text.push_str(&format!("  Questions totales: {}\n", stats.total_questions));
+            text.push_str(&format!("  Questions répondues: {}\n", stats.answered));
+            text.push_str(&format!("  Réponses positives: {}\n", stats.positive_answers));
+            text.push_str(&format!("  Réponses négatives: {}\n", stats.negative_answers));
+            text.push_str(&format!("  Pourcentage positif: {:.1}%\n", stats.positive_percentage()));
+            text.push_str(&format!("  Complétion: {:.1}%\n", stats.completion_percentage()));
+        }
+        text.push_str("\n");
+        
+        // Questions et réponses
+        text.push_str("QUESTIONS ET RÉPONSES\n");
+        text.push_str("───────────────────────────────────────────────────────────────\n");
+        
+        // Grouper les questions par catégorie
+        let mut questions_by_category: std::collections::HashMap<Category, Vec<&Question>> = std::collections::HashMap::new();
+        for question in &audit.questions {
+            questions_by_category
+                .entry(question.category.clone())
+                .or_insert_with(Vec::new)
+                .push(question);
+        }
+        
+        // Trier les catégories
+        let mut sorted_categories: Vec<_> = questions_by_category.keys().collect();
+        sorted_categories.sort_by(|a, b| format!("{}", a).cmp(&format!("{}", b)));
+        
+        for category in sorted_categories {
+            let questions = &questions_by_category[category];
+            text.push_str(&format!("\n┌─ Catégorie: {} ─────────────────────────────────────────────────────┐\n", category));
+            
+            for (idx, question) in questions.iter().enumerate() {
+                text.push_str(&format!("\nQuestion {}:\n", idx + 1));
+                text.push_str(&format!("  {}\n", question.text));
+                
+                if let Some(ref desc) = question.description {
+                    text.push_str(&format!("  Description: {}\n", desc));
+                }
+                
+                if let Some(answer) = audit.get_answer(&question.id) {
+                    text.push_str(&format!("  Réponse: {}\n", answer.answer));
+                    if let Some(percentage) = answer.percentage {
+                        text.push_str(&format!("  Pourcentage: {}%\n", percentage));
+                    }
+                    if let Some(ref comment) = answer.comment {
+                        text.push_str(&format!("  Commentaire: {}\n", comment));
+                    }
+                    text.push_str(&format!("  Répondu le: {}\n", answer.answered_at.format("%d/%m/%Y %H:%M:%S UTC")));
+                } else {
+                    text.push_str("  Réponse: Non répondue\n");
+                }
+                
+                if !question.links.is_empty() {
+                    text.push_str("  Liens utiles:\n");
+                    for link in &question.links {
+                        text.push_str(&format!("    - {}\n", link));
+                    }
+                }
+            }
+            text.push_str("└────────────────────────────────────────────────────────────────────┘\n");
+        }
+        text.push_str("\n");
+        
+        // Recommandations
+        let recommendations = RecommendationEngine::generate_recommendations(audit);
+        if !recommendations.is_empty() {
+            text.push_str("RECOMMANDATIONS\n");
+            text.push_str("───────────────────────────────────────────────────────────────\n");
+            
+            // Trier par priorité (du plus élevé au plus faible)
+            let mut sorted_recs = recommendations.clone();
+            sorted_recs.sort_by(|a, b| b.priority.cmp(&a.priority));
+            
+            for (idx, rec) in sorted_recs.iter().enumerate() {
+                text.push_str(&format!("\n{}. [{}] {}\n", idx + 1, rec.priority, rec.title));
+                text.push_str(&format!("   Catégorie: {}\n", rec.category));
+                text.push_str(&format!("   {}\n", rec.description));
+            }
+        } else {
+            text.push_str("RECOMMANDATIONS\n");
+            text.push_str("───────────────────────────────────────────────────────────────\n");
+            text.push_str("✓ Aucune recommandation - Toutes les pratiques sont bonnes !\n");
+        }
+        
+        text.push_str("\n═══════════════════════════════════════════════════════════════\n");
+        text.push_str(&format!("Rapport généré le: {}\n", chrono::Utc::now().format("%d/%m/%Y %H:%M:%S UTC")));
+        text.push_str("═══════════════════════════════════════════════════════════════\n");
+        
+        text
+    }
+
+    /// Exporte un audit vierge au format YAML
+    pub fn export_audit_to_yaml(&mut self) {
+        let audit = self.get_current_audit_for_recommendations();
+        if let Some(audit) = audit {
+            // Vérifier que l'audit est vierge (pas de réponses)
+            if !audit.answers.is_empty() {
+                self.error_message = Some("L'audit contient déjà des réponses. Exportez en TXT pour voir les résultats.\n".to_string());
+                return;
+            }
+            
+            let yaml = self.generate_audit_yaml(audit);
+            self.download_text_file(&yaml, &format!("audit_{}_vierge.yaml", 
+                audit.name.replace(" ", "_")));
+        } else {
+            self.error_message = Some("Aucun audit sélectionné pour l'export YAML".to_string());
+        }
+    }
+
+    /// Génère le YAML d'un audit vierge prêt à être rempli
+    fn generate_audit_yaml(&self, audit: &Audit) -> String {
+        // Structures pour la sérialisation YAML
+        #[derive(Serialize)]
+        struct QuestionYamlExport {
+            id: uuid::Uuid,
+            text: String,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            description: Option<String>,
+            category: String,
+            requires_percentage: bool,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            expected_answer: Option<String>,
+            #[serde(skip_serializing_if = "Vec::is_empty")]
+            links: Vec<String>,
+            // Champs à remplir
+            answer: Option<String>, // null par défaut, à remplir
+            #[serde(skip_serializing_if = "Option::is_none")]
+            percentage: Option<u8>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            comment: Option<String>,
+        }
+        
+        #[derive(Serialize)]
+        struct AuditYamlExport {
+            audit: AuditInfoYamlExport,
+            questions: Vec<QuestionYamlExport>,
+        }
+        
+        #[derive(Serialize)]
+        struct AuditInfoYamlExport {
+            name: String,
+            audit_type: String,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            project_name: Option<String>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            product_name: Option<String>,
+        }
+        
+        // Construire les questions
+        let questions: Vec<QuestionYamlExport> = audit.questions.iter().map(|q| {
+            QuestionYamlExport {
+                id: q.id,
+                text: q.text.clone(),
+                description: q.description.clone(),
+                category: format!("{}", q.category),
+                requires_percentage: q.requires_percentage,
+                expected_answer: q.expected_answer.as_ref().map(|a| format!("{}", a)),
+                links: q.links.clone(),
+                answer: None, // null par défaut, à remplir
+                percentage: None,
+                comment: None,
+            }
+        }).collect();
+        
+        let audit_info = AuditInfoYamlExport {
+            name: audit.name.clone(),
+            audit_type: format!("{}", audit.audit_type),
+            project_name: audit.project_name.clone(),
+            product_name: audit.product_name.clone(),
+        };
+        
+        let yaml_data = AuditYamlExport {
+            audit: audit_info,
+            questions,
+        };
+        
+        // Générer le YAML avec serde_yaml
+        let mut yaml = String::new();
+        yaml.push_str("# Audit vierge - Prêt à être rempli\n");
+        yaml.push_str("# Format: remplissez les champs 'answer' pour chaque question\n");
+        yaml.push_str("# Réponses possibles: Oui, Non, JeNeSaisPas, NonApplicable\n");
+        yaml.push_str("# Pour les questions nécessitant un pourcentage, remplissez aussi 'percentage' (0-100)\n");
+        yaml.push_str("# Vous pouvez aussi ajouter un 'comment' optionnel pour chaque réponse\n\n");
+        
+        // Utiliser serde_yaml pour générer le YAML proprement
+        // serde_yaml devrait automatiquement échapper les chaînes avec des caractères spéciaux
+        match serde_yaml::to_string(&yaml_data) {
+            Ok(serde_yaml_str) => {
+                // Post-traiter pour s'assurer que les chaînes avec des deux-points sont échappées
+                let processed = self.fix_yaml_strings(&serde_yaml_str);
+                yaml.push_str(&processed);
+            }
+            Err(e) => {
+                // En cas d'erreur, utiliser un message d'erreur
+                yaml.push_str(&format!("# Erreur lors de la génération YAML: {}\n", e));
+            }
+        }
+        
+        yaml
+    }
+
+    /// Pré-traite le YAML pour corriger les chaînes non échappées avant le parsing
+    fn fix_yaml_for_parsing(&self, yaml: &str) -> String {
+        let mut result = String::new();
+        let lines: Vec<&str> = yaml.lines().collect();
+        
+        for line in lines.iter() {
+            let trimmed = line.trim_start();
+            let indent = line.len() - trimmed.len();
+            
+            // Chercher les lignes avec des clés de type texte qui ont des valeurs non échappées
+            if trimmed.starts_with("text:") || trimmed.starts_with("description:") || 
+               trimmed.starts_with("name:") || trimmed.starts_with("project_name:") || 
+               trimmed.starts_with("product_name:") || trimmed.starts_with("expected_answer:") ||
+               trimmed.starts_with("comment:") || trimmed.starts_with("answer:") {
+                
+                if let Some(colon_pos) = trimmed.find(':') {
+                    let key_part = &trimmed[..colon_pos + 1];
+                    let rest = trimmed[colon_pos + 1..].trim();
+                    
+                    // Si la valeur contient des deux-points et n'est pas déjà entre guillemets
+                    if rest.contains(':') && !rest.starts_with('"') && !rest.starts_with('\'') && rest != "null" {
+                        // Séparer la valeur du commentaire
+                        let (value, comment) = if let Some(comment_pos) = rest.find(" #") {
+                            (rest[..comment_pos].trim(), &rest[comment_pos..])
+                        } else {
+                            (rest, "")
+                        };
+                        
+                        // Si la valeur contient des apostrophes, utiliser des guillemets doubles
+                        let quoted_value = if value.contains('\'') {
+                            format!("\"{}\"", value.replace('"', "\\\""))
+                        } else {
+                            format!("'{}'", value.replace('\'', "''"))
+                        };
+                        
+                        result.push_str(&format!("{}{} {}{}\n", 
+                            " ".repeat(indent), key_part, quoted_value, comment));
+                    } else {
+                        result.push_str(line);
+                        result.push('\n');
+                    }
+                } else {
+                    result.push_str(line);
+                    result.push('\n');
+                }
+            } else {
+                result.push_str(line);
+                result.push('\n');
+            }
+        }
+        
+        result
+    }
+
+    /// Corrige les chaînes YAML qui contiennent des deux-points non échappés lors de la génération
+    fn fix_yaml_strings(&self, yaml: &str) -> String {
+        let mut result = String::new();
+        let mut lines = yaml.lines().peekable();
+        
+        while let Some(line) = lines.next() {
+            // Chercher les lignes avec des clés de type texte qui ont des valeurs non échappées
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("text:") || trimmed.starts_with("description:") || 
+               trimmed.starts_with("name:") || trimmed.starts_with("project_name:") || 
+               trimmed.starts_with("product_name:") || trimmed.starts_with("expected_answer:") ||
+               trimmed.starts_with("comment:") || trimmed.starts_with("answer:") {
+                
+                // Séparer la clé et la valeur
+                if let Some(colon_pos) = trimmed.find(':') {
+                    let key_part = &trimmed[..colon_pos + 1];
+                    let value_part = trimmed[colon_pos + 1..].trim();
+                    
+                    // Si la valeur contient des deux-points et n'est pas déjà entre guillemets
+                    if value_part.contains(':') && !value_part.starts_with('"') && !value_part.starts_with('\'') && value_part != "null" {
+                        // Extraire le commentaire s'il y en a un
+                        let (value, comment) = if let Some(comment_pos) = value_part.find(" #") {
+                            (&value_part[..comment_pos], &value_part[comment_pos..])
+                        } else {
+                            (value_part, "")
+                        };
+                        
+                        // Échapper les apostrophes simples dans la valeur
+                        let escaped_value = value.replace('\'', "''");
+                        let indent = line.len() - trimmed.len();
+                        result.push_str(&format!("{}{} '{}'{}\n", 
+                            " ".repeat(indent), key_part, escaped_value, comment));
+                    } else {
+                        result.push_str(line);
+                        result.push('\n');
+                    }
+                } else {
+                    result.push_str(line);
+                    result.push('\n');
+                }
+            } else {
+                result.push_str(line);
+                result.push('\n');
+            }
+        }
+        
+        result
+    }
+
+    /// Importe un audit depuis un fichier YAML
+    /// Note: Cette fonction crée un input file et le déclenche
+    /// Le traitement du fichier doit être fait via JavaScript qui appelle process_yaml_import
+    #[cfg(target_arch = "wasm32")]
+    pub fn import_audit_from_yaml(&mut self) {
+        if let Some(window) = window() {
+            if let Some(document) = window.document() {
+                // Créer un input file caché
+                if let Ok(input) = document.create_element("input") {
+                    if let Some(input_elem) = input.dyn_ref::<HtmlInputElement>() {
+                        input_elem.set_type("file");
+                        input_elem.set_accept(".yaml,.yml");
+                        input_elem.style().set_property("display", "none").ok();
+                        
+                        // Générer un ID unique pour cet input
+                        let input_id = format!("yaml_import_{}", uuid::Uuid::new_v4());
+                        input_elem.set_id(&input_id);
+                        self.import_file_input_id = Some(input_id.clone());
+                        
+                        // Ajouter au document et déclencher le clic
+                        if let Some(body) = document.body() {
+                            if body.append_child(&input).is_ok() {
+                                input_elem.click();
+                                // Le fichier sera traité via JavaScript qui lira le contenu
+                                // et appellera process_yaml_import via wasm-bindgen
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// Version pour les tests (non-wasm32) - ne fait rien
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn import_audit_from_yaml(&mut self) {
+        // En mode test, on ne peut pas importer depuis un fichier
+        self.error_message = Some("Import YAML non disponible en mode test".to_string());
+    }
+
+    /// Traite le contenu YAML importé
+    pub fn process_yaml_import(&mut self, yaml_content: &str) {
+        match self.parse_and_create_audit_from_yaml(yaml_content) {
+            Ok(audit) => {
+                match self.audit_manager.save_audit(&audit) {
+                    Ok(()) => {
+                        self.load_audits();
+                        self.error_message = None;
+                        // Optionnel: sélectionner le nouvel audit
+                        if let Some(index) = self.audits.iter().position(|a| a.id == audit.id) {
+                            self.selected_audit_index = index;
+                        }
+                    }
+                    Err(e) => {
+                        self.error_message = Some(format!("Erreur lors de la sauvegarde: {}", e));
+                    }
+                }
+            }
+            Err(e) => {
+                self.error_message = Some(format!("Erreur lors de l'import YAML: {}\n", e));
+            }
+        }
+    }
+
+    /// Parse le YAML et crée un audit avec les réponses
+    fn parse_and_create_audit_from_yaml(&self, yaml_content: &str) -> Result<Audit, String> {
+        #[derive(Debug, Deserialize)]
+        struct QuestionYamlImport {
+            id: uuid::Uuid,
+            text: String,
+            description: Option<String>,
+            category: String,
+            requires_percentage: bool,
+            expected_answer: Option<String>,
+            links: Option<Vec<String>>,
+            answer: Option<String>,
+            percentage: Option<u8>,
+            comment: Option<String>,
+        }
+        
+        #[derive(Debug, Deserialize)]
+        struct AuditYamlImport {
+            audit: AuditInfoYaml,
+            questions: Vec<QuestionYamlImport>,
+        }
+        
+        #[derive(Debug, Deserialize)]
+        struct AuditInfoYaml {
+            name: String,
+            audit_type: String,
+            project_name: Option<String>,
+            product_name: Option<String>,
+        }
+        
+        // Pré-traiter le YAML pour corriger les chaînes non échappées
+        let fixed_yaml = self.fix_yaml_for_parsing(yaml_content);
+        
+        let yaml_data: AuditYamlImport = serde_yaml::from_str(&fixed_yaml)
+            .map_err(|e| {
+                // Améliorer le message d'erreur pour être plus utile
+                let error_msg = format!("Erreur de parsing YAML: {}", e);
+                // Si l'erreur mentionne une ligne, l'inclure dans le message
+                if e.to_string().contains("line") {
+                    format!("{} (Vérifiez la syntaxe YAML autour de cette ligne)", error_msg)
+                } else {
+                    error_msg
+                }
+            })?;
+        
+        // Créer l'audit
+        let audit_type = match yaml_data.audit.audit_type.as_str() {
+            "Technique" => AuditType::Technique,
+            "Business" => AuditType::Business,
+            "Marketing" => AuditType::Marketing,
+            other => AuditType::Autre(other.to_string()),
+        };
+        
+        let mut audit = Audit::new(yaml_data.audit.name, audit_type);
+        audit.project_name = yaml_data.audit.project_name;
+        audit.product_name = yaml_data.audit.product_name;
+        
+        // Ajouter les questions et réponses
+        for q_yaml in yaml_data.questions {
+            let category = match q_yaml.category.as_str() {
+                "Infra" => Category::Infra,
+                "Operation" => Category::Operation,
+                "DB" => Category::DB,
+                "A11y" => Category::A11y,
+                "Archi" => Category::Archi,
+                "OSS" => Category::OSS,
+                "DevXP" => Category::DevXP,
+                "Produit" => Category::Produit,
+                "Secu" => Category::Secu,
+                "Bizdev" => Category::Bizdev,
+                "Organisation" => Category::Organisation,
+                other => Category::Autre(other.to_string()),
+            };
+            
+            let expected_answer = q_yaml.expected_answer.as_ref().map(|s| match s.as_str() {
+                "Oui" => Answer::Oui,
+                "Non" => Answer::Non,
+                "JeNeSaisPas" => Answer::JeNeSaisPas,
+                "NonApplicable" => Answer::NonApplicable,
+                _ => Answer::Oui,
+            });
+            
+            let question = Question {
+                id: q_yaml.id,
+                text: q_yaml.text,
+                description: q_yaml.description,
+                category,
+                audit_type: audit.audit_type.clone(),
+                requires_percentage: q_yaml.requires_percentage,
+                expected_answer,
+                links: q_yaml.links.unwrap_or_default(),
+            };
+            
+            audit.add_question(question);
+            
+            // Si une réponse est fournie, l'ajouter
+            if let Some(answer_str) = q_yaml.answer {
+                // Normaliser la réponse (trim, casse insensible)
+                let answer_str_trimmed = answer_str.trim();
+                let answer_str_lower = answer_str_trimmed.to_lowercase();
+                
+                let answer = match answer_str_lower.as_str() {
+                    "oui" | "o" | "yes" | "y" => Answer::Oui,
+                    "non" | "n" | "no" => Answer::Non,
+                    "jene sais pas" | "je ne sais pas" | "jsp" | "j" | "dontknow" | "dont know" | "unknown" => Answer::JeNeSaisPas,
+                    "non applicable" | "na" | "a" | "n/a" | "not applicable" => Answer::NonApplicable,
+                    _ => {
+                        // Essayer de matcher avec la casse originale aussi
+                        match answer_str_trimmed {
+                            s if s == "Oui" || s == "OUI" => Answer::Oui,
+                            s if s == "Non" || s == "NON" => Answer::Non,
+                            s if s == "JeNeSaisPas" || s == "Je ne sais pas" => Answer::JeNeSaisPas,
+                            s if s == "NonApplicable" || s == "Non applicable" => Answer::NonApplicable,
+                            _ => {
+                                return Err(format!("Réponse invalide: '{}'. Réponses acceptées: Oui, Non, JeNeSaisPas, NonApplicable", answer_str_trimmed));
+                            }
+                        }
+                    }
+                };
+                
+                let question_answer = QuestionAnswer {
+                    question_id: q_yaml.id,
+                    answer,
+                    percentage: q_yaml.percentage,
+                    comment: q_yaml.comment,
+                    answered_at: chrono::Utc::now(),
+                };
+                
+                audit.answer_question(question_answer);
+            }
+        }
+        
+        Ok(audit)
+    }
+
+    /// Télécharge un fichier texte dans le navigateur
+    #[cfg(target_arch = "wasm32")]
+    fn download_text_file(&self, content: &str, filename: &str) {
+        if let Some(window) = window() {
+            if let Some(document) = window.document() {
+                // Créer un tableau de chaînes pour le blob
+                let content_js = wasm_bindgen::JsValue::from_str(content);
+                let content_array = js_sys::Array::new();
+                content_array.push(&content_js);
+                
+                // Créer un blob avec le contenu
+                let blob_options = {
+                    let opts = web_sys::BlobPropertyBag::new();
+                    opts.set_type("text/plain;charset=utf-8");
+                    opts
+                };
+                
+                if let Ok(blob) = web_sys::Blob::new_with_str_sequence_and_options(&content_array, &blob_options) {
+                    // Créer une URL pour le blob
+                    if let Ok(url) = Url::create_object_url_with_blob(&blob) {
+                        // Créer un élément <a> pour le téléchargement
+                        if let Ok(anchor) = document.create_element("a") {
+                            if let Some(anchor_elem) = anchor.dyn_ref::<HtmlAnchorElement>() {
+                                anchor_elem.set_href(&url);
+                                anchor_elem.set_download(filename);
+                                anchor_elem.style().set_property("display", "none").ok();
+                                
+                                // Ajouter au document, cliquer, puis retirer
+                                if let Some(body) = document.body() {
+                                    if body.append_child(&anchor).is_ok() {
+                                        anchor_elem.click();
+                                        let _ = body.remove_child(&anchor);
+                                    }
+                                }
+                                
+                                // Libérer l'URL du blob
+                                let _ = Url::revoke_object_url(&url);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Version pour les tests (non-wasm32) - ne fait rien
+    #[cfg(not(target_arch = "wasm32"))]
+    fn download_text_file(&self, _content: &str, _filename: &str) {
+        // En mode test, on ne télécharge pas vraiment de fichier
     }
 
     pub fn handle_tab(&mut self) {
@@ -338,6 +975,15 @@ impl AppState {
         }
     }
 
+    /// Vérifie si l'audit actuel ou sélectionné est complété à 100%
+    pub fn is_audit_complete(&self) -> bool {
+        if let Some(audit) = self.get_current_audit_for_recommendations() {
+            audit.completion_percentage() >= 100.0
+        } else {
+            false
+        }
+    }
+
     pub fn create_audit(&mut self) {
         // Validation: le nom ne doit pas être vide
         let name = self.new_audit_name.trim();
@@ -369,13 +1015,21 @@ impl AppState {
         // Ajouter les questions selon le type d'audit
         match audit.audit_type {
             AuditType::Technique => {
-                let questions = QuestionGenerator::generate_technical_questions();
+                let mut questions = QuestionGenerator::generate_technical_questions();
+                // Trier les questions par catégorie pour les grouper
+                questions.sort_by(|a, b| {
+                    format!("{}", a.category).cmp(&format!("{}", b.category))
+                });
                 for q in questions {
                     audit.add_question(q);
                 }
             }
             AuditType::Business => {
-                let questions = QuestionGenerator::generate_business_questions();
+                let mut questions = QuestionGenerator::generate_business_questions();
+                // Trier les questions par catégorie pour les grouper
+                questions.sort_by(|a, b| {
+                    format!("{}", a.category).cmp(&format!("{}", b.category))
+                });
                 for q in questions {
                     audit.add_question(q);
                 }
@@ -612,14 +1266,28 @@ impl AppState {
         
         f.render_widget(table, chunks[1]);
 
-        // Footer avec message d'erreur si présent
-        let footer_text = if let Some(ref error) = self.error_message {
-            format!("⚠️  {} | n: Nouvel audit | ↑↓: Navigation | Entrée: Ouvrir | r: Résultats | d: Supprimer | q: Quitter", error)
+        // Footer avec message d'erreur si présent ou message de confirmation
+        let footer_text = if self.pending_delete_audit_id.is_some() {
+            if let Some(audit) = self.audits.get(self.selected_audit_index) {
+                format!("⚠️  Confirmer la suppression de '{}' ? (o: Oui, n: Non)", audit.name)
+            } else {
+                "⚠️  Confirmer la suppression ? (o: Oui, n: Non)".to_string()
+            }
+        } else if let Some(ref error) = self.error_message {
+            format!("⚠️  {} | n: Nouvel audit | ↑↓: Navigation | Entrée: Ouvrir | r: Résultats | e: Exporter TXT | y: Exporter YAML | i: Importer | d: Supprimer | q: Quitter", error)
         } else {
-            "n: Nouvel audit | ↑↓: Navigation | Entrée: Ouvrir | r: Résultats | d: Supprimer | q: Quitter".to_string()
+            "n: Nouvel audit | ↑↓: Navigation | Entrée: Ouvrir | r: Résultats | e: Exporter TXT | y: Exporter YAML | i: Importer | d: Supprimer | q: Quitter".to_string()
         };
         let help = Paragraph::new(footer_text)
-            .style(Style::default().fg(if self.error_message.is_some() { Color::Red } else { Color::DarkGray }))
+            .style(Style::default().fg(
+                if self.pending_delete_audit_id.is_some() {
+                    Color::Yellow
+                } else if self.error_message.is_some() {
+                    Color::Red
+                } else {
+                    Color::DarkGray
+                }
+            ))
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(help, chunks[2]);
@@ -720,9 +1388,9 @@ impl AppState {
 
         // Footer avec instructions claires
         let help_text = if existing_answer.is_some() {
-            "↑↓: Navigation | o/n/j/a: Répondre | r: Résultats | q: Retour"
+            "↑↓: Navigation | o/n/j/a: Répondre | r: Résultats | e: Exporter | q: Retour"
         } else {
-            "↑↓: Navigation | o: Oui | n: Non | j: Je ne sais pas | a: Non applicable | r: Résultats | q: Retour"
+            "↑↓: Navigation | o: Oui | n: Non | j: Je ne sais pas | a: Non applicable | r: Résultats | e: Exporter | q: Retour"
         };
         let help = Paragraph::new(help_text)
             .style(Style::default().fg(Color::DarkGray))
@@ -1044,7 +1712,7 @@ impl AppState {
             }
 
             // Footer
-            let help = Paragraph::new("↑↓: Scroller les recommandations | q: Retour à la liste | r: Actualiser")
+            let help = Paragraph::new("↑↓: Scroller les recommandations | e: Exporter | q: Retour à la liste | r: Actualiser")
                 .style(Style::default().fg(Color::DarkGray))
                 .alignment(Alignment::Center)
                 .block(Block::default().borders(Borders::ALL));
@@ -1077,6 +1745,8 @@ impl Default for AppState {
             summary_scroll: 0,
             recommendations_scroll: 0,
             error_message: None,
+            pending_delete_audit_id: None,
+            import_file_input_id: None,
         };
         state.load_audits();
         state

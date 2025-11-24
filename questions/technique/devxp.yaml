@@ -5,6 +5,12 @@ questions:
     requires_percentage: false
     expected_answer: Oui
   
+  - text: "Avez-vous un guide d'onboarding complet pour les nouveaux développeurs (setup, architecture, processus, outils) ?"
+    description: "Documentation structurée pour l'onboarding : installation, architecture du projet, processus de développement, outils utilisés. Essentiel pour réduire le temps d'intégration."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
   - text: "Avez-vous un environnement de développement local facile à configurer (Docker Compose, Vagrant, etc.) ?"
     description: "Configuration automatisée via Docker Compose, Vagrant, ou équivalent. Réduit les frictions et les erreurs de configuration."
     category: DevXP
@@ -17,8 +23,32 @@ questions:
     requires_percentage: true
     expected_answer: Oui
   
+  - text: "Avez-vous mis en place différents types de tests (unitaires, intégration, E2E) selon une stratégie de test pyramid ?"
+    description: "Pyramide de tests avec tests unitaires nombreux, tests d'intégration modérés, et tests E2E ciblés. Essentiel pour une couverture efficace."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Vos APIs sont-elles testées avec des tests d'intégration automatisés (contrats, schémas, scénarios) ?"
+    description: "Tests automatisés des APIs (contrats, validation des schémas, scénarios métier). Critique pour garantir la stabilité des interfaces."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini et mesuré un niveau de qualité de code (résilience, architecture, maintenabilité) ?"
+    description: "Métriques de qualité (complexité cyclomatique, couplage, cohésion) suivies et objectifs définis. Essentiel pour maintenir la qualité à grande échelle."
+    category: DevXP
+    requires_percentage: true
+    expected_answer: Oui
+  
   - text: "Avez-vous des outils de qualité de code intégrés (linters, formatters) avec application automatique ?"
     description: "ESLint, Prettier, Rubocop, ou équivalents configurés et appliqués automatiquement dans le CI/CD. Assure la cohérence du code."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des standards de qualité de code définis et appliqués pour le backend (conventions, patterns, bonnes pratiques) ?"
+    description: "Standards documentés et appliqués pour le code backend (conventions de nommage, patterns, architecture). Essentiel pour la cohérence et la maintenabilité."
     category: DevXP
     requires_percentage: false
     expected_answer: Oui
@@ -55,6 +85,18 @@ questions:
   
   - text: "Avez-vous mis en place un système de pair programming ou de mob programming pour le partage de connaissances ?"
     description: "Pratiques de collaboration pour partager les connaissances et améliorer la qualité du code. Essentiel pour le scaling de l'équipe."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une documentation standardisée des processus de développement (workflow Git, conventions de nommage, standards de code) ?"
+    description: "Documentation claire des processus, conventions et standards. Essentiel pour la cohérence et l'onboarding."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment sont organisés vos dépôts de code (monorepo, multi-repo, structure) et est-ce documenté ?"
+    description: "Organisation claire des dépôts (monorepo vs multi-repo) et structure documentée. Essentiel pour la maintenabilité et l'onboarding."
     category: DevXP
     requires_percentage: false
     expected_answer: Oui

@@ -12,8 +12,8 @@
     />
     
 <script type="module">
-import init, * as bindings from '/survey-audit-445be1a0d25a66f3.js';
-const wasm = await init({ module_or_path: '/survey-audit-445be1a0d25a66f3_bg.wasm' });
+import init, * as bindings from '/survey-audit-d689518c56174089.js';
+const wasm = await init({ module_or_path: '/survey-audit-d689518c56174089_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -41,7 +41,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
         margin: 0px;
       }
     </style>
-  <link rel="modulepreload" href="/survey-audit-445be1a0d25a66f3.js" crossorigin="anonymous" integrity="sha384-H828tfv1SMvzWxHEDS5+BdwwMhjXAdGEYrQHibrgNVz+UJjjOjHL7Lzkx1BPOlJv"><link rel="preload" href="/survey-audit-445be1a0d25a66f3_bg.wasm" crossorigin="anonymous" integrity="sha384-Uy41MywJAytV/HF4HwZTxaWGkG5phD0GKXa483l/NCXdkakixbhEmlOoCtTmY1ka" as="fetch" type="application/wasm"></head>
+  <link rel="modulepreload" href="/survey-audit-d689518c56174089.js" crossorigin="anonymous" integrity="sha384-UiCFGazw/isBdm3V+hgD+OnUiLKT98dRWUmuFL4lKMNi9bHUlVAb5GZEsP6nOTQT"><link rel="preload" href="/survey-audit-d689518c56174089_bg.wasm" crossorigin="anonymous" integrity="sha384-HAlSVdeN2sA1/qIsubz53zZfr915iBa7ZHMOy36aMczW2aNOj+dvxhon+GzrjY7Y" as="fetch" type="application/wasm"></head>
   <body>
     <script type="module">
       window.addEventListener("TrunkApplicationStarted", (_) => {
@@ -71,6 +71,27 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
       document.addEventListener("click", (e) => {
         if (e.target === document.body || e.target === document.documentElement) {
           document.body.focus();
+        }
+      });
+      
+      // Gérer l'import de fichiers YAML
+      document.addEventListener("change", async (e) => {
+        if (e.target.type === "file" && e.target.accept.includes("yaml")) {
+          const file = e.target.files[0];
+          if (file) {
+            try {
+              const text = await file.text();
+              if (window.wasmBindings && window.wasmBindings.process_yaml_import) {
+                window.wasmBindings.process_yaml_import(text);
+                // Retirer l'input du DOM après utilisation
+                e.target.remove();
+              } else {
+                console.error("Fonction process_yaml_import non disponible");
+              }
+            } catch (error) {
+              console.error("Erreur lors de la lecture du fichier:", error);
+            }
+          }
         }
       });
     </script>
