@@ -1,0 +1,80 @@
+questions:
+  - text: "Les données sont-elles chiffrées au repos (at rest) ?"
+    description: "Chiffrement des données stockées pour empêcher l'utilisation des données en cas d'intrusion. Essentiel pour la conformité et la sécurité."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous le chiffrement pour les données en transit (HTTPS, TLS) ?"
+    description: "HTTPS entre client et serveur, TLS entre serveur et base de données. Protection contre l'interception des données."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous en place une détection des secrets dans le code exécuté sur la CI ?"
+    description: "Détection automatique des secrets (mots de passe, clés API) dans le code source via GitLab/GitHub/SonarQube."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+    links:
+      - "https://docs.gitlab.com/ee/user/application_security/secret_detection/"
+      - "https://gitleaks.io/"
+  
+  - text: "Utilisez-vous des MFAs pour accéder aux interfaces d'administration de vos outils et infras ?"
+    description: "Authentification à deux facteurs pour tous les accès administratifs (GitLab, GitHub, hébergeur, monitoring, etc.)."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+    links:
+      - "https://fr.wikipedia.org/wiki/Double_authentification"
+  
+  - text: "Effectuez-vous des audits de sécurité réguliers (pentest, scans de vulnérabilités) ?"
+    description: "Audits de sécurité au moins annuels, scans automatiques réguliers des dépendances et du code. Essentiel pour identifier les vulnérabilités."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place une gestion des secrets (ex: Vault, AWS Secrets Manager, HashiCorp Vault) ?"
+    description: "Stockage sécurisé des secrets hors du code source, rotation automatique, accès contrôlé. Critique pour le scaling sécurisé."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une politique de gestion des accès (IAM) documentée et appliquée avec principe du moindre privilège ?"
+    description: "Gestion des droits d'accès, revue régulière, principe du moindre privilège. Essentiel pour limiter les risques en cas de compromission."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous un WAF (Web Application Firewall) pour protéger contre les attaques applicatives ?"
+    description: "Protection contre les attaques au niveau applicatif (OWASP Top 10, injection SQL, XSS, etc.)."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place une gestion des certificats SSL/TLS automatisée (Let's Encrypt, cert-manager) ?"
+    description: "Renouvellement automatique des certificats pour éviter les expirations et maintenir la sécurité."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de détection d'intrusion (IDS) et de prévention (IPS) ?"
+    description: "Surveillance et protection contre les tentatives d'intrusion en temps réel. Essentiel pour la sécurité à grande échelle."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Effectuez-vous des revues de sécurité du code (code review security) systématiques ?"
+    description: "Revue de code axée sur la sécurité, checklist de sécurité, formation de l'équipe aux bonnes pratiques."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un plan de réponse aux incidents de sécurité documenté et testé ?"
+    description: "Procédures de réponse aux incidents, équipe dédiée, tests réguliers. Essentiel pour réagir rapidement en cas d'incident."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+
+
+

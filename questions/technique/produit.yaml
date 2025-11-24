@@ -1,0 +1,63 @@
+questions:
+  - text: "Avez-vous mis en place un système de suivi des erreurs utilisateurs (Sentry, Rollbar, Bugsnag) ?"
+    description: "Monitoring des erreurs en production, alertes, analyse des crashs. Essentiel pour identifier et résoudre rapidement les problèmes."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Collectez-vous des métriques d'usage (analytics) pour comprendre l'utilisation du produit ?"
+    description: "Métriques d'utilisation, parcours utilisateur, points de friction. Essentiel pour prendre des décisions data-driven."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de feedback utilisateur intégré (formulaires, tickets, NPS) ?"
+    description: "Mécanisme pour recueillir les retours utilisateurs, NPS, enquêtes. Essentiel pour l'amélioration continue."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre application est-elle responsive (mobile-friendly) avec tests sur différents appareils ?"
+    description: "Interface adaptée aux différentes tailles d'écran, testée sur mobile, tablette, desktop. Essentiel pour l'adoption."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place des tests d'acceptation utilisateur (UAT) avec de vrais utilisateurs ?"
+    description: "Tests avec de vrais utilisateurs avant mise en production. Valide l'expérience utilisateur et réduit les risques."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de A/B testing pour valider les hypothèses produit ?"
+    description: "Tests A/B pour comparer différentes versions et prendre des décisions basées sur les données. Essentiel pour l'optimisation."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Monitorez-vous les métriques de performance utilisateur (Core Web Vitals, temps de chargement) ?"
+    description: "Monitoring des métriques de performance (LCP, FID, CLS) et optimisation continue. Essentiel pour l'expérience utilisateur."
+    category: Produit
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de feature flags pour déployer progressivement les fonctionnalités ?"
+    description: "Feature flags pour activer/désactiver des fonctionnalités sans redéploiement, déploiement progressif. Réduit les risques."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Collectez-vous des métriques business (conversion, rétention, engagement) pour mesurer le succès ?"
+    description: "Métriques business pour mesurer l'impact des fonctionnalités et prendre des décisions stratégiques."
+    category: Produit
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de monitoring de la satisfaction utilisateur (CSAT, CES) ?"
+    description: "Mesure régulière de la satisfaction utilisateur pour identifier les points d'amélioration. Essentiel pour la rétention."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+
+
+

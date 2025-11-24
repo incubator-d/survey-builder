@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Audit - Outil d'audit technique</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Survey Audit</h1>
+            <span class="subtitle">Outil d'audit technique et business pour projets</span>
+        </header>
+
+        <main id="app">
+            <!-- Vue liste des audits -->
+            <div id="list-view" class="view">
+                <div class="header-section">
+                    <h2>Mes audits</h2>
+                    <button class="btn btn-primary" onclick="showCreateForm()">+ Nouvel audit</button>
+                </div>
+                <div id="audits-list" class="audits-table-container"></div>
+            </div>
+
+            <!-- Vue création d'audit -->
+            <div id="create-view" class="view hidden">
+                <div class="header-section">
+                    <h2>Créer un nouvel audit</h2>
+                    <button class="btn btn-secondary" onclick="showListView()">◄ Retour</button>
+                </div>
+                <form id="create-form" class="form">
+                    <div class="form-group">
+                        <label for="audit-name">Nom de l'audit</label>
+                        <input type="text" id="audit-name" required placeholder="Ex: Audit technique MonProjet">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-type">Type d'audit</label>
+                        <select id="audit-type" required>
+                            <option value="technique">Technique</option>
+                            <option value="business">Business</option>
+                            <option value="marketing">Marketing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-name">Nom du projet (optionnel)</label>
+                        <input type="text" id="project-name" placeholder="Ex: MonProjet">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-name">Nom du produit (optionnel)</label>
+                        <input type="text" id="product-name" placeholder="Ex: MonProduit">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Créer l'audit</button>
+                </form>
+            </div>
+
+            <!-- Vue détail d'audit -->
+            <div id="detail-view" class="view hidden">
+                <div class="header-section">
+                    <h2 id="audit-title"></h2>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="showListView()">◄ Retour</button>
+                        <button class="btn btn-primary" onclick="showRadarChart()">Graphique</button>
+                        <button class="btn btn-primary" onclick="showRecommendations()">Recommandations</button>
+                        <button class="btn btn-danger" onclick="deleteAuditFromDetail()">× Supprimer</button>
+                    </div>
+                </div>
+                <div class="audit-info">
+                    <div class="info-item progress-item">
+                        <div class="progress-header">
+                            <span class="label">Catégorie:</span>
+                            <span id="category-display" class="value"></span>
+                        </div>
+                        <div class="progress-content">
+                            <span class="label">Progression:</span>
+                            <div class="progress-bar">
+                                <div id="progress-fill" class="progress-fill"></div>
+                            </div>
+                            <span id="progress-text" class="progress-text"></span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Complétion:</span>
+                        <span id="completion" class="value"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Type:</span>
+                        <span id="audit-type-display" class="value"></span>
+                    </div>
+                </div>
+                <div id="questions-container"></div>
+            </div>
+
+            <!-- Vue graphique radar -->
+            <div id="radar-view" class="view hidden">
+                <div class="header-section">
+                    <h2>Résultats par catégorie</h2>
+                    <button class="btn btn-secondary" onclick="showDetailView()">◄ Retour</button>
+                </div>
+                <div class="radar-container">
+                    <canvas id="radar-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Vue recommandations -->
+            <div id="recommendations-view" class="view hidden">
+                <div class="header-section">
+                    <h2>Recommandations</h2>
+                    <button class="btn btn-secondary" onclick="showDetailView()">◄ Retour</button>
+                </div>
+                <div id="recommendations-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+

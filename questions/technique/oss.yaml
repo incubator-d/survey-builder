@@ -1,0 +1,51 @@
+questions:
+  - text: "Votre code source est-il ouvert (open source) sous une licence appropriée ?"
+    description: "Code accessible publiquement sous licence open source (MIT, Apache, GPL, etc.). Favorise la transparence et la collaboration."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une politique de contribution documentée avec guide des contributeurs et code de conduite ?"
+    description: "Guide pour les contributeurs, processus de contribution, code de conduite. Essentiel pour construire une communauté."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre projet open source a-t-il une documentation complète (README, CONTRIBUTING, CHANGELOG) ?"
+    description: "Documentation d'installation, d'utilisation, de contribution, changelog. Essentiel pour l'adoption et la contribution."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous des dépendances open source à jour et maintenues avec vérification des vulnérabilités ?"
+    description: "Dépendances régulièrement mises à jour, vérification automatique des vulnérabilités (Dependabot, Snyk). Critique pour la sécurité."
+    category: OSS
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de gestion des issues et pull requests avec labels et templates ?"
+    description: "Organisation claire des contributions, templates pour issues et PR, labels pour la catégorisation. Facilite la collaboration."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Effectuez-vous des releases régulières avec versioning sémantique (SemVer) ?"
+    description: "Releases régulières, versioning sémantique (MAJOR.MINOR.PATCH), changelog. Facilite l'adoption et la maintenance."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de maintenance et de support de la communauté ?"
+    description: "Réponse aux issues, review des PR, support de la communauté. Essentiel pour la pérennité du projet."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre projet open source a-t-il des tests publics et une couverture de code visible ?"
+    description: "Tests accessibles publiquement, badges de couverture, CI/CD publique. Favorise la confiance et la contribution."
+    category: OSS
+    requires_percentage: false
+    expected_answer: Oui
+
+
+
