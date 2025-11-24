@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css"
+    />
+    <link data-trunk rel="rust"/>
+    <title>Survey Audit</title>
+    <style>
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        background-color: #121212;
+      }
+      pre {
+        font-family: "Fira Code", monospace;
+        font-size: 16px;
+        margin: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      window.addEventListener("TrunkApplicationStarted", (_) => {
+        console.log("Survey Audit initialisé");
+      });
+
+      // Empêcher le comportement par défaut du navigateur pour Tab
+      // Tab est utilisé par l'application pour naviguer entre les champs
+      document.addEventListener("keydown", (e) => {
+        // Empêcher Tab de naviguer dans le navigateur
+        // Ratzilla gérera l'événement après via wasm-bindgen
+        if (e.key === "Tab") {
+          e.preventDefault();
+          // Ne pas stopPropagation pour que Ratzilla puisse le recevoir
+        }
+      }, true); // Utiliser capture pour intercepter tôt
+      
+      // Rendre le body focusable pour capturer les événements clavier
+      document.body.setAttribute("tabindex", "0");
+      
+      // Focus sur le body au chargement pour capturer les événements clavier
+      window.addEventListener("load", () => {
+        document.body.focus();
+      });
+      
+      // Re-focus sur le body si on clique ailleurs
+      document.addEventListener("click", (e) => {
+        if (e.target === document.body || e.target === document.documentElement) {
+          document.body.focus();
+        }
+      });
+      
+      // Gérer l'import de fichiers YAML
+      document.addEventListener("change", async (e) => {
+        if (e.target.type === "file" && e.target.accept.includes("yaml")) {
+          const file = e.target.files[0];
+          if (file) {
+            try {
+              const text = await file.text();
+              if (window.wasmBindings && window.wasmBindings.process_yaml_import) {
+                window.wasmBindings.process_yaml_import(text);
+                // Retirer l'input du DOM après utilisation
+                e.target.remove();
+              } else {
+                console.error("Fonction process_yaml_import non disponible");
+              }
+            } catch (error) {
+              console.error("Erreur lors de la lecture du fichier:", error);
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
+

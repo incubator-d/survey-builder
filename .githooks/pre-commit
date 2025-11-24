@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Git hook pre-commit pour vérifier le code avant le commit
+#
+
+set -e
+
+echo "🔍 Vérification du formatage..."
+cargo fmt --all -- --check || {
+    echo "❌ Le code n'est pas formaté correctement. Exécutez: cargo fmt"
+    exit 1
+}
+
+echo "🔍 Vérification des lints..."
+cargo clippy --all-targets --all-features -- -D warnings || {
+    echo "❌ Des erreurs de lint ont été détectées. Corrigez-les avant de commiter."
+    exit 1
+}
+
+echo "✅ Toutes les vérifications sont passées!"
+

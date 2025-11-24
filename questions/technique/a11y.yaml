@@ -1,0 +1,65 @@
+questions:
+  - text: "Votre application respecte-t-elle les standards d'accessibilité WCAG 2.1 niveau AA minimum ?"
+    description: "Conformité aux standards d'accessibilité web. Niveau AA recommandé pour les projets publics et à grande échelle."
+    category: A11y
+    requires_percentage: true
+    expected_answer: Oui
+    links:
+      - "https://www.w3.org/WAI/WCAG21/quickref/"
+  
+  - text: "Effectuez-vous des tests d'accessibilité automatisés dans votre CI/CD (axe-core, pa11y, WAVE) ?"
+    description: "Tests automatisés d'accessibilité intégrés au pipeline pour détecter les problèmes tôt. Essentiel pour maintenir l'accessibilité à grande échelle."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous testé votre application avec des lecteurs d'écran (NVDA, JAWS, VoiceOver) ?"
+    description: "Tests manuels avec des outils d'assistance pour valider l'expérience utilisateur réelle. Critique pour l'accessibilité."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Vos formulaires ont-ils des labels associés et une gestion d'erreurs accessible (ARIA) ?"
+    description: "Labels ARIA, messages d'erreur associés aux champs, navigation au clavier. Essentiel pour l'accessibilité des formulaires."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre application est-elle utilisable uniquement au clavier (sans souris) ?"
+    description: "Navigation complète possible avec Tab, Entrée, Espace, flèches. Tous les éléments interactifs accessibles au clavier."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de contraste de couleurs conforme (ratio 4.5:1 minimum) ?"
+    description: "Contraste suffisant entre texte et arrière-plan pour la lisibilité. Essentiel pour les utilisateurs malvoyants."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Vos images ont-elles des textes alternatifs (alt) descriptifs et pertinents ?"
+    description: "Textes alternatifs pour toutes les images significatives, vides pour les images décoratives. Essentiel pour les lecteurs d'écran."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous testé votre application avec des outils d'agrandissement d'écran (zoom 200%) ?"
+    description: "Application utilisable avec zoom jusqu'à 200% sans perte de fonctionnalité. Test de compatibilité avec les outils d'assistance."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place une navigation claire et cohérente avec des landmarks ARIA ?"
+    description: "Structure sémantique claire, landmarks ARIA pour faciliter la navigation avec les lecteurs d'écran."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Effectuez-vous des tests d'accessibilité avec de vrais utilisateurs en situation de handicap ?"
+    description: "Tests utilisateurs avec des personnes en situation de handicap pour valider l'expérience réelle. Essentiel pour une accessibilité réelle."
+    category: A11y
+    requires_percentage: false
+    expected_answer: Oui
+
+
+

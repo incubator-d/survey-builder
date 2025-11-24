@@ -1,0 +1,63 @@
+questions:
+  - text: "Disposez-vous d'une stratégie de déploiement territorial documentée ?"
+    description: "Plan structuré pour déployer votre solution sur différents territoires avec objectifs, priorités et moyens. Essentiel pour un déploiement efficace."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+    links:
+      - "https://www.numerique.gouv.fr/publications/guide-de-deploiement-territorial/"
+  
+  - text: "Avez-vous identifié vos territoires cibles prioritaires pour le déploiement ?"
+    description: "Sélection des territoires (communes, départements, régions) où déployer en priorité selon des critères définis (besoins, ressources, partenariats)."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un modèle économique clair et documenté pour votre solution ?"
+    description: "Modèle de revenus, coûts, et viabilité économique. Essentiel pour assurer la pérennité du projet."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous calculé le retour sur investissement (ROI) pour les collectivités qui adoptent votre solution ?"
+    description: "Calcul du ROI montrant les gains (économiques, temps, qualité) pour les collectivités. Essentiel pour convaincre les décideurs."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Mesurez-vous le coût d'acquisition de nouveaux utilisateurs ou territoires (CAC) ?"
+    description: "Suivi du coût pour acquérir un nouveau client ou territoire. Essentiel pour optimiser les efforts commerciaux."
+    category: Bizdev
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini des indicateurs de succès business (KPIs) et les suivez-vous régulièrement ?"
+    description: "Métriques business clés (nombre d'utilisateurs, taux d'adoption, revenus, satisfaction). Essentiel pour piloter la croissance."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un plan de croissance à court, moyen et long terme ?"
+    description: "Roadmap business avec objectifs quantifiés et stratégies pour chaque horizon temporel. Essentiel pour structurer la croissance."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous identifié vos partenaires stratégiques pour le déploiement ?"
+    description: "Partenaires clés (institutions, associations, entreprises) qui peuvent faciliter le déploiement. Essentiel pour accélérer l'adoption."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de pricing claire et adaptée à votre marché ?"
+    description: "Modèle tarifaire adapté au secteur public/privé avec justification. Essentiel pour la viabilité économique."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous analysé la concurrence et votre positionnement sur le marché ?"
+    description: "Analyse concurrentielle et différenciation. Essentiel pour identifier les avantages compétitifs."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+

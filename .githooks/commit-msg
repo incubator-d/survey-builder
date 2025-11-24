@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Git hook pour valider le format des messages de commit
+# Utilise le format Conventional Commits
+#
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Pattern pour Conventional Commits
+# Format: <type>(<scope>): <subject>
+# Types valides: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+pattern="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,}"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo "❌ Format de commit invalide!"
+    echo ""
+    echo "Le message de commit doit suivre le format Conventional Commits:"
+    echo "  <type>(<scope>): <subject>"
+    echo ""
+    echo "Types valides:"
+    echo "  feat:     Nouvelle fonctionnalité"
+    echo "  fix:      Correction de bug"
+    echo "  docs:     Documentation"
+    echo "  style:    Formatage, point-virgule manquant, etc."
+    echo "  refactor: Refactorisation du code"
+    echo "  test:     Ajout ou modification de tests"
+    echo "  chore:    Maintenance, configuration, etc."
+    echo "  perf:     Amélioration des performances"
+    echo "  ci:       Configuration CI/CD"
+    echo "  build:    Système de build"
+    echo "  revert:   Annulation d'un commit précédent"
+    echo ""
+    echo "Exemples:"
+    echo "  feat: ajouter support des audits Business"
+    echo "  fix(ui): corriger l'affichage des questions"
+    echo "  docs: mettre à jour le README"
+    echo ""
+    exit 1
+fi
+
+# Vérifier la longueur du sujet (première ligne)
+subject=$(echo "$commit_msg" | head -n1 | sed 's/^[^:]*: //')
+if [ ${#subject} -gt 72 ]; then
+    echo "⚠️  Avertissement: Le sujet du commit dépasse 72 caractères (${#subject} caractères)"
+    echo "   Considérez le raccourcir pour une meilleure lisibilité"
+fi
+
+exit 0
+

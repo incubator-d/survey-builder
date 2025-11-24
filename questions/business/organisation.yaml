@@ -1,0 +1,43 @@
+questions:
+  - text: "Avez-vous une équipe dédiée au business development ou à la commercialisation ?"
+    description: "Ressources humaines dédiées au développement commercial. Essentiel pour structurer la croissance."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini des processus commerciaux (prospection, qualification, closing) ?"
+    description: "Processus structurés pour gérer le cycle commercial. Essentiel pour l'efficacité et la prévisibilité."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous un CRM ou outil de suivi commercial pour gérer vos prospects et clients ?"
+    description: "Outil de gestion de la relation client pour suivre les interactions et opportunités. Essentiel pour la structuration."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus d'onboarding pour les nouveaux clients ou territoires ?"
+    description: "Processus structuré pour accompagner les nouveaux clients dans l'adoption. Essentiel pour la satisfaction et la rétention."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un support client ou une assistance utilisateurs ?"
+    description: "Mécanismes de support pour aider les utilisateurs. Essentiel pour la satisfaction et l'adoption."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Mesurez-vous la satisfaction client régulièrement ?"
+    description: "Collecte régulière de retours clients (enquêtes, entretiens). Essentiel pour l'amélioration continue."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de gestion des contrats et de la facturation ?"
+    description: "Processus clairs pour gérer les aspects contractuels et financiers. Essentiel pour la professionnalisation."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+

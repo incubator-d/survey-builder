@@ -1,0 +1,105 @@
+questions:
+  - text: "Un nouveau développeur peut-il démarrer le projet en moins de 30 minutes avec la documentation ?"
+    description: "Documentation claire, environnement de développement simple à mettre en place, onboarding rapide. Essentiel pour le scaling de l'équipe."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un guide d'onboarding complet pour les nouveaux développeurs (setup, architecture, processus, outils) ?"
+    description: "Documentation structurée pour l'onboarding : installation, architecture du projet, processus de développement, outils utilisés. Essentiel pour réduire le temps d'intégration."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un environnement de développement local facile à configurer (Docker Compose, Vagrant, etc.) ?"
+    description: "Configuration automatisée via Docker Compose, Vagrant, ou équivalent. Réduit les frictions et les erreurs de configuration."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre codebase a-t-il une couverture de tests suffisante (> 70%) avec tests unitaires et d'intégration ?"
+    description: "Tests unitaires, d'intégration, couverture mesurée et suivie. Essentiel pour la confiance lors des refactorings et le scaling."
+    category: DevXP
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place différents types de tests (unitaires, intégration, E2E) selon une stratégie de test pyramid ?"
+    description: "Pyramide de tests avec tests unitaires nombreux, tests d'intégration modérés, et tests E2E ciblés. Essentiel pour une couverture efficace."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Vos APIs sont-elles testées avec des tests d'intégration automatisés (contrats, schémas, scénarios) ?"
+    description: "Tests automatisés des APIs (contrats, validation des schémas, scénarios métier). Critique pour garantir la stabilité des interfaces."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini et mesuré un niveau de qualité de code (résilience, architecture, maintenabilité) ?"
+    description: "Métriques de qualité (complexité cyclomatique, couplage, cohésion) suivies et objectifs définis. Essentiel pour maintenir la qualité à grande échelle."
+    category: DevXP
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous des outils de qualité de code intégrés (linters, formatters) avec application automatique ?"
+    description: "ESLint, Prettier, Rubocop, ou équivalents configurés et appliqués automatiquement dans le CI/CD. Assure la cohérence du code."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des standards de qualité de code définis et appliqués pour le backend (conventions, patterns, bonnes pratiques) ?"
+    description: "Standards documentés et appliqués pour le code backend (conventions de nommage, patterns, architecture). Essentiel pour la cohérence et la maintenabilité."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre documentation technique est-elle à jour et facilement accessible (README, docs inline, guides) ?"
+    description: "Documentation inline, README complet, guides de développement. Essentiel pour la productivité et l'onboarding."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de revue de code (code review) systématique avec guidelines claires ?"
+    description: "Toutes les modifications passent par une revue avant merge, guidelines de review. Améliore la qualité et le partage de connaissances."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de pré-commit hooks pour valider le code avant commit ?"
+    description: "Hooks Git pour linter, formatter, et tests rapides avant commit. Réduit les erreurs et améliore la qualité."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre CI/CD fournit-il un feedback rapide (< 10 minutes) aux développeurs ?"
+    description: "Pipeline CI/CD rapide pour un feedback immédiat. Essentiel pour la productivité et la qualité."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des outils de debugging et de profiling intégrés pour faciliter le développement ?"
+    description: "Outils de debugging, profiling, et monitoring intégrés dans l'environnement de développement. Facilite la résolution de problèmes."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de pair programming ou de mob programming pour le partage de connaissances ?"
+    description: "Pratiques de collaboration pour partager les connaissances et améliorer la qualité du code. Essentiel pour le scaling de l'équipe."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une documentation standardisée des processus de développement (workflow Git, conventions de nommage, standards de code) ?"
+    description: "Documentation claire des processus, conventions et standards. Essentiel pour la cohérence et l'onboarding."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment sont organisés vos dépôts de code (monorepo, multi-repo, structure) et est-ce documenté ?"
+    description: "Organisation claire des dépôts (monorepo vs multi-repo) et structure documentée. Essentiel pour la maintenabilité et l'onboarding."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+
+
+

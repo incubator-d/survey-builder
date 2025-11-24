@@ -1,0 +1,163 @@
+questions:
+  - text: "Avez-vous une Definition of Done (DOD) et une Definition of Ready (DOR) documentées et appliquées ?"
+    description: "Critères clairs pour considérer une tâche comme prête à être développée (DOR) et comme terminée (DOD). Essentiel pour la qualité et la prévisibilité."
+    category: DevXP
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Quelle est la fréquence de vos releases en production ?"
+    description: "Fréquence régulière des releases (quotidienne, hebdomadaire, mensuelle). Indicateur de maturité du processus de déploiement."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de déploiement avec validation sur environnement de staging avant production ?"
+    description: "Environnement de staging pour valider les changements avant production. Réduit les risques et améliore la confiance."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment est organisée la revue de code dans votre équipe ?"
+    description: "Processus systématique de revue de code avec guidelines claires. Améliore la qualité et le partage de connaissances."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous documenté l'organisation de votre équipe (rôles, séniorité, responsabilités) ?"
+    description: "Clarté sur les rôles, niveaux de séniorité, et responsabilités. Essentiel pour le scaling de l'équipe et l'onboarding."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment est gérée la transition de connaissances avec les freelances ou consultants externes ?"
+    description: "Processus documenté pour capturer et transférer les connaissances lors des transitions. Critique pour éviter la perte de savoir-faire."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une base de connaissances centralisée et à jour pour l'équipe ?"
+    description: "Documentation centralisée (wiki, Notion, Confluence) accessible à toute l'équipe. Essentiel pour le partage de connaissances."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Documentez-vous les décisions d'architecture importantes (Architecture Decision Records - ADRs) ?"
+    description: "Enregistrement des décisions architecturales avec contexte, alternatives considérées, et conséquences. Essentiel pour comprendre l'évolution du système."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des rituels de partage de bonnes pratiques dans l'équipe (tech talks, rétrospectives techniques) ?"
+    description: "Mécanismes réguliers pour partager les apprentissages et bonnes pratiques. Essentiel pour l'amélioration continue et le scaling."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment sont gérées les urgences en production (on-call, processus d'escalade) ?"
+    description: "Processus clair pour gérer les incidents critiques avec rotation on-call et escalade définie. Critique pour la réactivité."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de debug en production documenté avec outils appropriés ?"
+    description: "Procédures et outils pour investiguer et résoudre les problèmes en production. Essentiel pour réduire le temps de résolution."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment sont suivis et résolus les incidents (ticketing, post-mortem, amélioration continue) ?"
+    description: "Système de suivi des incidents, analyse post-mortem, et actions correctives. Essentiel pour éviter la répétition des problèmes."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous identifié et documenté les parties du code nécessitant le plus de maintenance (dette technique) ?"
+    description: "Identification et suivi de la dette technique avec plan d'action. Essentiel pour planifier les refactorings et éviter l'accumulation."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Y a-t-il des choix techniques ou architecturaux que vous remettez en question aujourd'hui ?"
+    description: "Identification des choix techniques problématiques et réflexion sur les alternatives. Indicateur de maturité et d'amélioration continue."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Non
+  
+  - text: "Avez-vous une roadmap technique documentée avec priorités et planning ?"
+    description: "Vision technique à moyen terme avec priorités claires. Essentiel pour planifier les évolutions et migrations."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Quels sont les prochains défis techniques à relever pour votre équipe ?"
+    description: "Identification des défis techniques majeurs (scaling, migrations, refactoring). Essentiel pour anticiper et planifier."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Y a-t-il des migrations technologiques prévues ou en cours ?"
+    description: "Planification des migrations (versions, frameworks, infrastructure). Essentiel pour éviter les obsolescences et maintenir la maintenabilité."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment est planifiée l'évolution de l'architecture (temps dédié, processus de décision) ?"
+    description: "Temps et processus dédiés à l'évolution architecturale. Essentiel pour éviter l'accumulation de dette technique."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini des SLAs techniques (disponibilité, temps de réponse, throughput) ?"
+    description: "Service Level Agreements techniques mesurables et monitorés. Essentiel pour garantir la qualité de service à grande échelle."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des SLAs produit ou business (temps de résolution, disponibilité service) ?"
+    description: "Engagements de service vis-à-vis des utilisateurs ou clients. Essentiel pour aligner les objectifs techniques et business."
+    category: Produit
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Quelles métriques techniques suivez-vous régulièrement (performance, erreurs, disponibilité) ?"
+    description: "Métriques clés suivies et dashboardés. Essentiel pour comprendre le comportement du système et détecter les problèmes."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Comment est gérée la montée en charge (auto-scaling, monitoring proactif, planification) ?"
+    description: "Stratégie pour gérer l'augmentation de charge (automatique ou manuelle). Critique pour la scalabilité."
+    category: Infra
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous identifié les limites actuelles de votre infrastructure (CPU, mémoire, réseau, stockage) ?"
+    description: "Connaissance des limites et capacité de scaling. Essentiel pour anticiper les besoins et éviter les problèmes."
+    category: Infra
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous identifié les goulots d'étranglement potentiels (bottlenecks) dans votre système ?"
+    description: "Identification proactive des points de contention. Essentiel pour optimiser les performances et planifier les améliorations."
+    category: Infra
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un plan de continuité d'activité (PCA) documenté et testé avec site de secours ?"
+    description: "Plan de reprise d'activité avec site de secours géographiquement séparé. Critique pour la résilience en cas de catastrophe."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre stratégie de backup inclut-elle des tests de restauration réguliers ?"
+    description: "Tests réguliers de restauration des backups pour valider leur intégrité. Critique pour garantir la récupération en cas d'incident."
+    category: DB
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de scan automatique des dépendances pour détecter les vulnérabilités (Dependabot, Renovate, Snyk) ?"
+    description: "Scan automatique et mise à jour des dépendances vulnérables. Essentiel pour maintenir la sécurité à jour."
+    category: Secu
+    requires_percentage: false
+    expected_answer: Oui
+

@@ -1,0 +1,69 @@
+questions:
+  - text: "Votre architecture suit-elle les principes SOLID et les bonnes pratiques de design ?"
+    description: "Séparation des responsabilités, dépendances inversées, ouverture/fermeture. Essentiel pour une architecture maintenable à grande échelle."
+    category: Archi
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous une architecture modulaire et découplée avec des services indépendants ?"
+    description: "Services indépendants, API bien définies, faible couplage. Essentiel pour le scaling et l'évolution indépendante des composants."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre code respecte-t-il le principe DRY (Don't Repeat Yourself) avec factorisation appropriée ?"
+    description: "Éviter la duplication de code, factorisation appropriée, réutilisabilité. Critique pour la maintenabilité à grande échelle."
+    category: Archi
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous une documentation technique à jour de votre architecture avec diagrammes (C4, UML) ?"
+    description: "Documentation des composants, flux de données, décisions architecturales. Essentiel pour l'onboarding et la maintenance."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre documentation API inclut-elle des exemples d'utilisation, schémas de données, et cas d'erreur ?"
+    description: "Documentation API complète avec exemples concrets, schémas de requêtes/réponses, et gestion d'erreurs. Essentiel pour faciliter l'intégration."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous des patterns de design appropriés pour votre contexte (Repository, Factory, Strategy, etc.) ?"
+    description: "Patterns adaptés au domaine métier et aux contraintes techniques. Améliore la maintenabilité et la testabilité."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place une architecture orientée événements (event-driven) pour le découplage ?"
+    description: "Communication asynchrone via événements pour découpler les services. Essentiel pour le scaling horizontal et la résilience."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Votre architecture supporte-t-elle le scaling horizontal de chaque composant indépendamment ?"
+    description: "Chaque service peut être scalé indépendamment selon sa charge. Essentiel pour optimiser les coûts et les performances."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place une stratégie de versioning d'API pour l'évolution sans breaking changes ?"
+    description: "Versioning d'API (v1, v2) pour permettre l'évolution sans casser les clients existants. Essentiel pour le scaling."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous des contrats d'API (OpenAPI, GraphQL schema) pour la documentation et la validation ?"
+    description: "Contrats d'API définis et validés automatiquement. Améliore la collaboration et réduit les erreurs d'intégration."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de gestion des dépendances et de découplage des bibliothèques externes ?"
+    description: "Abstraction des dépendances externes, interfaces pour faciliter les changements. Essentiel pour la flexibilité et la testabilité."
+    category: Archi
+    requires_percentage: false
+    expected_answer: Oui
+
+
+

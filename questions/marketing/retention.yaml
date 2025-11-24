@@ -1,0 +1,43 @@
+questions:
+  - text: "Avez-vous une stratégie de rétention client documentée ?"
+    description: "Plan pour maintenir et développer la relation avec les clients existants. Essentiel pour la croissance durable."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Mesurez-vous le taux de rétention client et le taux de churn ?"
+    description: "Suivi des indicateurs de rétention. Essentiel pour identifier les problèmes et améliorer."
+    category: Bizdev
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un programme de fidélisation ou de récompenses ?"
+    description: "Incentives pour encourager la fidélité et l'engagement. Peut améliorer la rétention."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Communiquez-vous régulièrement avec vos clients existants (newsletters, actualités) ?"
+    description: "Communication régulière pour maintenir l'engagement. Essentiel pour la rétention."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Proposez-vous des formations ou ressources pour aider les clients à mieux utiliser la solution ?"
+    description: "Support à l'adoption et à la maîtrise de la solution. Améliore la satisfaction et la rétention."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Collectez-vous et analysez-vous les retours clients pour améliorer la solution ?"
+    description: "Processus systématique de collecte et d'analyse des feedbacks. Essentiel pour l'amélioration continue."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie d'upselling ou de cross-selling pour développer les revenus par client ?"
+    description: "Approche pour vendre des fonctionnalités supplémentaires ou des services complémentaires. Important pour la croissance."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+

@@ -1,0 +1,69 @@
+questions:
+  - text: "Avez-vous un système d'observabilité complet (métriques, logs, traces) avec outils comme Prometheus/Grafana, Datadog, ou New Relic ?"
+    description: "Observabilité complète avec métriques business et techniques, logs structurés, et traces distribuées. Essentiel pour comprendre le comportement à grande échelle."
+    category: Operation
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système d'alerting intelligent avec seuils adaptatifs et alertes business ?"
+    description: "Alertes basées sur des métriques business (taux d'erreur, temps de réponse, SLA), avec seuils intelligents pour éviter l'alert fatigue."
+    category: Operation
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Effectuez-vous des tests de charge réguliers pour valider la capacité de scaling ?"
+    description: "Tests de charge automatisés avant chaque release majeure, tests de stress pour identifier les limites. Essentiel pour anticiper les problèmes de scaling."
+    category: Operation
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous un plan de reprise d'activité (PRA) documenté, testé, et automatisé ?"
+    description: "PRA avec procédures automatisées de basculement, tests réguliers (au moins trimestriels), et documentation à jour. Critique pour la résilience."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Vos déploiements sont-ils automatisés via CI/CD avec tests automatisés et déploiements progressifs (blue/green, canary) ?"
+    description: "Pipeline CI/CD complet avec tests, déploiements progressifs pour réduire les risques, et rollback automatique en cas d'échec."
+    category: Operation
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous un système de feature flags pour déployer progressivement les nouvelles fonctionnalités ?"
+    description: "Feature flags pour activer/désactiver des fonctionnalités sans redéploiement, A/B testing, et déploiement progressif. Essentiel pour réduire les risques."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Recevez-vous des alertes en temps réel en cas de downtime ou de dégradation de performance ?"
+    description: "Monitoring externe (updown.io, Pingdom) et alertes automatiques via SMS/email/Slack en cas de problème. Essentiel pour la réactivité."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une procédure de rollback documentée, testée, et automatisée ?"
+    description: "Capacité à revenir rapidement à une version précédente en cas de problème. Tests réguliers de la procédure."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un système de runbooks automatisés pour les incidents courants ?"
+    description: "Documentation automatisée des procédures de résolution d'incidents, avec scripts d'automatisation quand possible."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Effectuez-vous des chaos engineering ou tests de résilience pour valider la robustesse du système ?"
+    description: "Tests proactifs de la résilience en simulant des pannes (Chaos Monkey, Gremlin). Essentiel pour identifier les faiblesses avant qu'elles ne causent des problèmes."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Suivez-vous activement des métriques clés (performance, erreurs, disponibilité, business) avec dashboards dédiés ?"
+    description: "Métriques suivies régulièrement avec dashboards et alertes. Essentiel pour détecter les problèmes et prendre des décisions data-driven."
+    category: Operation
+    requires_percentage: false
+    expected_answer: Oui
+
+
+
