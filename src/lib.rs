@@ -213,54 +213,6 @@ enum InputMode {
 }
 
 impl AppState {
-    /// Helper pour wrapper un texte en tenant compte de la largeur disponible
-    fn wrap_text(text: &str, max_width: usize) -> Vec<String> {
-        if max_width == 0 {
-            return vec![text.to_string()];
-        }
-        
-        let mut lines = Vec::new();
-        let words: Vec<&str> = text.split_whitespace().collect();
-        let mut current_line = String::new();
-        
-        for word in words {
-            let test_line = if current_line.is_empty() {
-                word.to_string()
-            } else {
-                format!("{} {}", current_line, word)
-            };
-            
-            if test_line.len() <= max_width {
-                current_line = test_line;
-            } else {
-                if !current_line.is_empty() {
-                    lines.push(current_line);
-                }
-                // Si un mot est plus long que max_width, on le coupe
-                if word.len() > max_width {
-                    let mut remaining = word;
-                    while remaining.len() > max_width {
-                        lines.push(remaining[..max_width].to_string());
-                        remaining = &remaining[max_width..];
-                    }
-                    current_line = remaining.to_string();
-                } else {
-                    current_line = word.to_string();
-                }
-            }
-        }
-        
-        if !current_line.is_empty() {
-            lines.push(current_line);
-        }
-        
-        if lines.is_empty() {
-            lines.push(String::new());
-        }
-        
-        lines
-    }
-
     #[allow(dead_code)]
     fn new() -> Self {
         let mut state = Self {
@@ -390,31 +342,6 @@ impl AppState {
         }
     }
 
-    fn get_recommendations_count(&self) -> usize {
-        // Retourner le nombre de recommandations (pas le nombre d'items)
-        if let Some(audit) = self.get_current_audit_for_recommendations() {
-            let recommendations = RecommendationEngine::generate_recommendations(audit);
-            recommendations.len()
-        } else {
-            0
-        }
-    }
-    
-    fn get_recommendations_items_count(&self) -> usize {
-        // Utiliser la même logique que render_recommendations pour obtenir l'audit
-        if let Some(audit) = self.get_current_audit_for_recommendations() {
-            let recommendations = RecommendationEngine::generate_recommendations(audit);
-            if recommendations.is_empty() {
-                1 // Un seul item "Aucune recommandation"
-            } else {
-                // Chaque recommandation = 3 items (titre, description, ligne vide)
-                recommendations.len() * 3
-            }
-        } else {
-            1
-        }
-    }
-    
     fn get_current_audit_for_recommendations(&self) -> Option<&Audit> {
         // Même logique que render_recommendations
         if self.view == View::Detail {
