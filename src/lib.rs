@@ -58,8 +58,11 @@ pub fn main() -> Result<(), wasm_bindgen::JsValue> {
         move |key_event| {
             let mut state = app_state.borrow_mut();
             
-            // Gestion de la saisie de texte pour les formulaires (prioritaire)
-            if state.view == View::Create && state.input_mode != InputMode::Normal {
+            // Gestion de la saisie de texte pour les formulaires et le mode commentaire (prioritaire)
+            // En mode commentaire, TOUS les caractères sont de la saisie (y compris e, f, q, r)
+            // Cette section doit être AVANT les raccourcis globaux pour intercepter tous les caractères
+            if (state.view == View::Create && state.input_mode != InputMode::Normal) 
+                || (state.view == View::Detail && state.input_mode == InputMode::Comment) {
                 match key_event.code {
                     // Pour le type, on utilise les flèches pour naviguer
                     KeyCode::Up | KeyCode::Down | KeyCode::Left | KeyCode::Right
@@ -89,10 +92,17 @@ pub fn main() -> Result<(), wasm_bindgen::JsValue> {
                         return;
                     }
                     KeyCode::Tab => {
-                        state.handle_tab();
+                        // Tab ne fonctionne que dans la vue Create
+                        if state.view == View::Create {
+                            state.handle_tab();
+                        }
                         return;
                     }
                     KeyCode::Esc => {
+                        // Annuler le mode commentaire (le commentaire en cours est perdu)
+                        if state.input_mode == InputMode::Comment {
+                            state.answer_comment.clear();
+                        }
                         state.input_mode = InputMode::Normal;
                         return;
                     }
@@ -103,9 +113,48 @@ pub fn main() -> Result<(), wasm_bindgen::JsValue> {
                 }
             }
             
-            // Gestion des réponses rapides dans la vue Detail
-            if state.view == View::Detail {
+            // Gestion des réponses rapides dans la vue Detail (seulement si pas en mode commentaire)
+            if state.view == View::Detail && state.input_mode != InputMode::Comment {
                 match key_event.code {
+                    KeyCode::Char('c') | KeyCode::Char('C') => {
+                        // Entrer en mode commentaire
+                        // Initialiser avec le commentaire existant s'il y en a un
+                        if let Some(audit) = state.get_current_audit() {
+                            // Calculer les indices visibles (même logique que get_visible_question_indices)
+                            let visible_indices: Vec<usize> = if state.filter_unanswered {
+                                audit.questions
+                                    .iter()
+                                    .enumerate()
+                                    .filter_map(|(idx, question)| {
+                                        if audit.get_answer(&question.id).is_none() {
+                                            Some(idx)
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect()
+                            } else {
+                                (0..audit.questions.len()).collect()
+                            };
+                            
+                            if state.current_question_index < visible_indices.len() {
+                                let real_idx = visible_indices[state.current_question_index];
+                                if let Some(question) = audit.questions.get(real_idx) {
+                                    if let Some(answer) = audit.get_answer(&question.id) {
+                                        if let Some(ref comment) = answer.comment {
+                                            state.answer_comment = comment.clone();
+                                        } else {
+                                            state.answer_comment.clear();
+                                        }
+                                    } else {
+                                        state.answer_comment.clear();
+                                    }
+                                }
+                            }
+                        }
+                        state.input_mode = InputMode::Comment;
+                        return;
+                    }
                     KeyCode::Char('o') | KeyCode::Char('O') => {
                         state.answer_value = "o".to_string();
                         state.save_answer();
@@ -148,89 +197,97 @@ pub fn main() -> Result<(), wasm_bindgen::JsValue> {
                 }
             }
             
-            // Gestion des raccourcis globaux (seulement si pas en mode saisie)
-            match key_event.code {
-                KeyCode::Char('q') | KeyCode::Esc => {
-                    if state.view == View::Detail || state.view == View::Create {
-                        if state.input_mode != InputMode::Normal {
-                            state.input_mode = InputMode::Normal;
-                        } else {
+            // Gestion des raccourcis globaux (IGNORÉS en mode commentaire - sauf e, f, q, r déjà gérés)
+            if state.input_mode != InputMode::Comment {
+                match key_event.code {
+                    KeyCode::Char('q') | KeyCode::Esc => {
+                        if state.view == View::Detail || state.view == View::Create {
+                            if state.input_mode != InputMode::Normal {
+                                state.input_mode = InputMode::Normal;
+                            } else {
+                                state.view = View::List;
+                            }
+                        } else if state.view == View::Recommendations {
                             state.view = View::List;
                         }
-                    } else if state.view == View::Recommendations {
-                        state.view = View::List;
                     }
-                }
-                KeyCode::Char('n') => {
-                    if state.view == View::List {
-                        state.view = View::Create;
-                        state.new_audit_name.clear();
-                        state.new_audit_type_index = 0;
-                        state.input_mode = InputMode::Name; // Positionner directement sur le premier champ
+                    KeyCode::Char('n') => {
+                        if state.view == View::List {
+                            state.view = View::Create;
+                            state.new_audit_name.clear();
+                            state.new_audit_type_index = 0;
+                            state.input_mode = InputMode::Name; // Positionner directement sur le premier champ
+                        }
                     }
-                }
-                KeyCode::Char('r') => {
-                    // Accéder aux recommandations depuis Detail ou List
-                    // Seulement si toutes les questions sont répondues
-                    if state.view == View::Detail || state.view == View::List {
-                        if state.is_audit_complete() {
-                            state.view = View::Recommendations;
-                            state.summary_scroll = 0; // Réinitialiser le scroll
-                            state.recommendations_scroll = 0; // Réinitialiser le scroll des recommandations
-                        } else {
-                            // Afficher un message d'erreur
-                            if let Some(audit) = state.get_current_audit_for_recommendations() {
-                                let completion = audit.completion_percentage();
-                                state.error_message = Some(format!(
-                                    "Vous devez répondre à toutes les questions avant d'accéder aux résultats (Complétion: {:.1}%)\n",
-                                    completion
-                                ));
+                    KeyCode::Char('r') => {
+                        // Accéder aux recommandations depuis Detail ou List
+                        // Seulement si toutes les questions sont répondues
+                        if state.view == View::Detail || state.view == View::List {
+                            if state.is_audit_complete() {
+                                state.view = View::Recommendations;
+                                state.summary_scroll = 0; // Réinitialiser le scroll
+                                state.recommendations_scroll = 0; // Réinitialiser le scroll des recommandations
                             } else {
-                                state.error_message = Some("Aucun audit sélectionné".to_string());
+                                // Afficher un message d'erreur
+                                if let Some(audit) = state.get_current_audit_for_recommendations() {
+                                    let completion = audit.completion_percentage();
+                                    state.error_message = Some(format!(
+                                        "Vous devez répondre à toutes les questions avant d'accéder aux résultats (Complétion: {:.1}%)\n",
+                                        completion
+                                    ));
+                                } else {
+                                    state.error_message = Some("Aucun audit sélectionné".to_string());
+                                }
                             }
                         }
                     }
-                }
-                KeyCode::Enter => {
-                    state.handle_enter();
-                }
-                KeyCode::Up | KeyCode::Char('k') => {
-                    state.handle_up();
-                }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    state.handle_down();
-                }
-                KeyCode::Left | KeyCode::Char('h') => {
-                    state.handle_left();
-                }
-                KeyCode::Right | KeyCode::Char('l') => {
-                    state.handle_right();
-                }
-                KeyCode::Char('d') => {
-                    state.handle_delete();
-                }
-                KeyCode::Char('e') | KeyCode::Char('E') => {
-                    // Exporter l'audit au format TXT
-                    if state.view == View::Detail || state.view == View::List || state.view == View::Recommendations {
-                        state.export_audit_to_txt();
+                    KeyCode::Enter => {
+                        state.handle_enter();
                     }
-                }
-                KeyCode::Char('y') | KeyCode::Char('Y') => {
-                    // Exporter l'audit vierge au format YAML
-                    if state.view == View::Detail || state.view == View::List {
-                        state.export_audit_to_yaml();
+                    KeyCode::Up | KeyCode::Char('k') => {
+                        state.handle_up();
                     }
-                }
-                KeyCode::Char('i') | KeyCode::Char('I') => {
-                    // Importer un audit depuis un fichier YAML
-                    if state.view == View::List {
-                        state.import_audit_from_yaml();
+                    KeyCode::Down | KeyCode::Char('j') => {
+                        state.handle_down();
                     }
+                    KeyCode::Left | KeyCode::Char('h') => {
+                        state.handle_left();
+                    }
+                    KeyCode::Right | KeyCode::Char('l') => {
+                        state.handle_right();
+                    }
+                    KeyCode::Char('d') => {
+                        state.handle_delete();
+                    }
+                    KeyCode::Char('e') | KeyCode::Char('E') => {
+                        // Exporter l'audit au format TXT
+                        if state.view == View::Detail || state.view == View::List || state.view == View::Recommendations {
+                            state.export_audit_to_txt();
+                        }
+                    }
+                    KeyCode::Char('y') | KeyCode::Char('Y') => {
+                        // Exporter l'audit vierge au format YAML
+                        if state.view == View::Detail || state.view == View::List {
+                            state.export_audit_to_yaml();
+                        }
+                    }
+                    KeyCode::Char('i') | KeyCode::Char('I') => {
+                        // Importer un audit depuis un fichier YAML
+                        if state.view == View::List {
+                            state.import_audit_from_yaml();
+                        }
+                    }
+                    KeyCode::Char('f') | KeyCode::Char('F') => {
+                        // Activer/désactiver le filtre des questions non répondues
+                        if state.view == View::Detail {
+                            state.toggle_filter_unanswered();
+                        }
+                    }
+                    KeyCode::Tab => {
+                        state.handle_tab();
+                    }
+                    _ => {}
                 }
-                KeyCode::Tab => {
-                    state.handle_tab();
-                }
-                _ => {}
             }
         }
     });

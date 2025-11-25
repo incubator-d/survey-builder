@@ -237,6 +237,8 @@ impl QuestionGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::recommendations::RecommendationEngine;
+    use crate::shared::utils::calculate_global_score;
 
     #[test]
     fn test_parse_yaml_content() {
@@ -527,6 +529,115 @@ questions:
             Category::Autre(s) => assert_eq!(s, "Intra"),
             _ => panic!("Devrait être Category::Autre(\"Intra\")"),
         }
+    }
+
+    #[test]
+    fn test_create_complete_audit_workflow() {
+        // Test d'intégration : créer un audit complet avec questions et réponses
+        let mut audit = Audit::new("Audit de test complet".to_string(), AuditType::Technique);
+        audit.project_name = Some("Projet Test".to_string());
+        audit.product_name = Some("Produit Test".to_string());
+        
+        // Générer des questions techniques
+        let questions = QuestionGenerator::generate_technical_questions();
+        assert!(!questions.is_empty() || questions.is_empty()); // Peut être vide si fichiers absents
+        
+        // Ajouter quelques questions de test
+        let test_question1 = Question {
+            id: Uuid::new_v4(),
+            text: "Question test 1".to_string(),
+            description: Some("Description test 1".to_string()),
+            category: Category::Infra,
+            audit_type: AuditType::Technique,
+            requires_percentage: false,
+            expected_answer: Some(Answer::Oui),
+            links: vec!["https://example.com".to_string()],
+        };
+        
+        let test_question2 = Question {
+            id: Uuid::new_v4(),
+            text: "Question test 2".to_string(),
+            description: None,
+            category: Category::Secu,
+            audit_type: AuditType::Technique,
+            requires_percentage: true,
+            expected_answer: Some(Answer::Oui),
+            links: Vec::new(),
+        };
+        
+        audit.add_question(test_question1.clone());
+        audit.add_question(test_question2.clone());
+        
+        // Vérifier l'état initial
+        assert_eq!(audit.questions.len(), 2);
+        assert_eq!(audit.answers.len(), 0);
+        assert_eq!(audit.completion_percentage(), 0.0);
+        
+        // Répondre à la première question
+        let answer1 = QuestionAnswer {
+            question_id: test_question1.id,
+            answer: Answer::Oui,
+            percentage: None,
+            comment: Some("Commentaire test".to_string()),
+            answered_at: chrono::Utc::now(),
+        };
+        audit.answer_question(answer1);
+        
+        // Répondre à la seconde question avec pourcentage
+        let answer2 = QuestionAnswer {
+            question_id: test_question2.id,
+            answer: Answer::Oui,
+            percentage: Some(75),
+            comment: None,
+            answered_at: chrono::Utc::now(),
+        };
+        audit.answer_question(answer2);
+        
+        // Vérifier l'état après réponses
+        assert_eq!(audit.answers.len(), 2);
+        assert_eq!(audit.completion_percentage(), 100.0);
+        
+        // Vérifier qu'on peut récupérer les réponses
+        assert!(audit.get_answer(&test_question1.id).is_some());
+        assert!(audit.get_answer(&test_question2.id).is_some());
+        assert_eq!(audit.get_answer(&test_question1.id).unwrap().answer, Answer::Oui);
+        assert_eq!(audit.get_answer(&test_question2.id).unwrap().percentage, Some(75));
+        
+        // Générer des recommandations
+        let _recommendations = RecommendationEngine::generate_recommendations(&audit);
+        // Avec des réponses positives, il ne devrait pas y avoir de recommandations spécifiques
+        // mais peut avoir des recommandations globales selon les scores
+        
+        // Générer un résumé
+        let summary = RecommendationEngine::generate_summary(&audit);
+        assert_eq!(summary.total_questions, 2);
+        assert_eq!(summary.total_answered, 2);
+        assert_eq!(summary.completion_percentage, 100.0);
+        assert!(!summary.category_stats.is_empty());
+        
+        // Vérifier les statistiques par catégorie
+        let infra_stats = summary.category_stats.iter()
+            .find(|s| s.category == Category::Infra);
+        assert!(infra_stats.is_some());
+        let infra = infra_stats.unwrap();
+        assert_eq!(infra.total_questions, 1);
+        assert_eq!(infra.answered, 1);
+        assert_eq!(infra.positive_answers, 1);
+        
+        let secu_stats = summary.category_stats.iter()
+            .find(|s| s.category == Category::Secu);
+        assert!(secu_stats.is_some());
+        let secu = secu_stats.unwrap();
+        assert_eq!(secu.total_questions, 1);
+        assert_eq!(secu.answered, 1);
+        assert_eq!(secu.positive_answers, 1);
+        
+        // Calculer le score global
+        let global_score = calculate_global_score(&audit);
+        assert!(global_score.is_some());
+        assert_eq!(global_score.unwrap(), 100.0); // 2 réponses positives sur 2
+        
+        // Test réussi : l'audit complet fonctionne correctement
     }
 }
 

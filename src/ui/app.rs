@@ -45,6 +45,7 @@ pub struct AppState {
     pub error_message: Option<String>, // Message d'erreur à afficher à l'utilisateur
     pub pending_delete_audit_id: Option<uuid::Uuid>, // ID de l'audit en attente de suppression
     pub import_file_input_id: Option<String>, // ID de l'input file pour l'import
+    pub filter_unanswered: bool, // Filtre pour n'afficher que les questions sans réponse
 }
 
 /// Vues disponibles dans l'application
@@ -66,6 +67,7 @@ pub enum InputMode {
     Type,
     Project,
     Product,
+    Comment,
 }
 
 impl AppState {
@@ -145,11 +147,19 @@ impl AppState {
                 }
             }
             View::Detail => {
-                // Entrée passe à la question suivante
-                // Les réponses sont sauvegardées automatiquement quand on tape o/n/j/a
-                if let Some(audit) = self.get_current_audit() {
-                    if self.current_question_index < audit.questions.len().saturating_sub(1) {
+                if self.input_mode == InputMode::Comment {
+                    // En mode commentaire, Entrée valide le commentaire et sort du mode
+                    self.input_mode = InputMode::Normal;
+                } else {
+                    // Entrée passe à la question suivante
+                    // Les réponses sont sauvegardées automatiquement quand on tape o/n/j/a
+                    let visible_indices = self.get_visible_question_indices();
+                    if self.current_question_index < visible_indices.len().saturating_sub(1) {
                         self.current_question_index += 1;
+                    } else if self.filter_unanswered {
+                        // Si on est en mode filtre et qu'on a répondu à toutes les questions visibles,
+                        // on peut désactiver le filtre ou rester sur la dernière
+                        // Pour l'instant, on reste sur la dernière question
                     }
                 }
             }
@@ -165,8 +175,12 @@ impl AppState {
                 }
             }
             View::Detail => {
-                if self.current_question_index > 0 {
+                let visible_indices = self.get_visible_question_indices();
+                if self.current_question_index > 0 && !visible_indices.is_empty() {
                     self.current_question_index -= 1;
+                } else if !visible_indices.is_empty() {
+                    // Si on est à la première question visible, on reste dessus
+                    self.current_question_index = 0;
                 }
             }
             View::Recommendations => {
@@ -200,6 +214,82 @@ impl AppState {
         }
     }
 
+    /// Obtient les indices des questions non répondues pour l'audit actuel
+    fn get_unanswered_question_indices(&self) -> Vec<usize> {
+        if let Some(audit) = self.get_current_audit() {
+            audit.questions
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, question)| {
+                    if audit.get_answer(&question.id).is_none() {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Obtient la liste des indices de questions à afficher (filtrée ou non)
+    fn get_visible_question_indices(&self) -> Vec<usize> {
+        if let Some(audit) = self.get_current_audit() {
+            if self.filter_unanswered {
+                self.get_unanswered_question_indices()
+            } else {
+                (0..audit.questions.len()).collect()
+            }
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Obtient l'index réel de la question actuelle dans la liste complète
+    fn get_real_question_index(&self) -> Option<usize> {
+        let visible_indices = self.get_visible_question_indices();
+        if self.current_question_index < visible_indices.len() {
+            Some(visible_indices[self.current_question_index])
+        } else {
+            None
+        }
+    }
+
+    /// Active ou désactive le filtre des questions non répondues
+    pub fn toggle_filter_unanswered(&mut self) {
+        if self.get_current_audit().is_some() {
+            let old_filter = self.filter_unanswered;
+            self.filter_unanswered = !self.filter_unanswered;
+            
+            // Si on active le filtre, on doit ajuster l'index pour pointer vers la première question non répondue
+            if self.filter_unanswered && !old_filter {
+                let unanswered_indices = self.get_unanswered_question_indices();
+                if !unanswered_indices.is_empty() {
+                    // Trouver l'index de la question actuelle dans la liste filtrée
+                    if let Some(current_real_idx) = self.get_real_question_index() {
+                        if let Some(pos) = unanswered_indices.iter().position(|&idx| idx == current_real_idx) {
+                            self.current_question_index = pos;
+                        } else {
+                            // Si la question actuelle est déjà répondue, aller à la première non répondue
+                            self.current_question_index = 0;
+                        }
+                    } else {
+                        self.current_question_index = 0;
+                    }
+                } else {
+                    // Toutes les questions sont répondues
+                    self.current_question_index = 0;
+                }
+            } else if !self.filter_unanswered && old_filter {
+                // Si on désactive le filtre, on doit ajuster l'index pour pointer vers la même question
+                if let Some(real_idx) = self.get_real_question_index() {
+                    self.current_question_index = real_idx;
+                }
+            }
+        }
+    }
+
     pub fn handle_down(&mut self) {
         match self.view {
             View::List => {
@@ -208,9 +298,13 @@ impl AppState {
                 }
             }
             View::Detail => {
-                if let Some(audit) = self.get_current_audit() {
-                    if self.current_question_index < audit.questions.len().saturating_sub(1) {
+                let visible_indices = self.get_visible_question_indices();
+                if !visible_indices.is_empty() {
+                    if self.current_question_index < visible_indices.len().saturating_sub(1) {
                         self.current_question_index += 1;
+                    } else {
+                        // On est à la dernière question visible, on reste dessus
+                        self.current_question_index = visible_indices.len().saturating_sub(1);
                     }
                 }
             }
@@ -945,6 +1039,9 @@ impl AppState {
             InputMode::Product => {
                 self.new_product_name.push(c);
             }
+            InputMode::Comment => {
+                self.answer_comment.push(c);
+            }
             _ => {}
         }
     }
@@ -962,6 +1059,9 @@ impl AppState {
             }
             InputMode::Product => {
                 self.new_product_name.pop();
+            }
+            InputMode::Comment => {
+                self.answer_comment.pop();
             }
             _ => {}
         }
@@ -1063,10 +1163,16 @@ impl AppState {
         // Récupérer l'ID de la question actuelle avant de modifier l'audit
         let current_question_id = {
             let audit = &self.audits[audit_index];
-            if self.current_question_index >= audit.questions.len() {
+            // Utiliser l'index réel si on est en mode filtre
+            let real_index = if self.view == View::Detail {
+                self.get_real_question_index().unwrap_or(self.current_question_index)
+            } else {
+                self.current_question_index
+            };
+            if real_index >= audit.questions.len() {
                 return;
             }
-            audit.questions[self.current_question_index].id
+            audit.questions[real_index].id
         };
         
         // Parser la réponse en utilisant les constantes
@@ -1126,6 +1232,7 @@ impl AppState {
 
         // Sauver l'index actuel avant la sauvegarde
         let saved_index = self.current_question_index;
+        let was_filtered = self.filter_unanswered;
         
         // Sauvegarder
         match self.audit_manager.save_audit(audit) {
@@ -1135,12 +1242,41 @@ impl AppState {
                 self.answer_comment.clear();
                 
                 // Passer à la question suivante
-                // On utilise l'index sauvegardé pour éviter les problèmes de référence
-                if saved_index < audit.questions.len().saturating_sub(1) {
-                    self.current_question_index = saved_index + 1;
+                if was_filtered {
+                    // En mode filtre, on passe à la prochaine question non répondue
+                    let unanswered_indices = self.get_unanswered_question_indices();
+                    if !unanswered_indices.is_empty() {
+                        // Trouver la position de la question actuelle dans la liste filtrée
+                        if let Some(current_real_idx) = self.get_real_question_index() {
+                            // Trouver la prochaine question non répondue après celle qu'on vient de répondre
+                            if let Some(next_pos) = unanswered_indices.iter().position(|&idx| idx > current_real_idx) {
+                                self.current_question_index = next_pos;
+                            } else {
+                                // Plus de questions non répondues après celle-ci
+                                // On reste sur la dernière question non répondue ou on désactive le filtre
+                                if saved_index < unanswered_indices.len() {
+                                    self.current_question_index = unanswered_indices.len().saturating_sub(1);
+                                } else {
+                                    // Toutes les questions sont maintenant répondues
+                                    self.current_question_index = 0;
+                                }
+                            }
+                        } else {
+                            // Si on ne trouve pas l'index réel, on reste à la position actuelle
+                            self.current_question_index = saved_index;
+                        }
+                    } else {
+                        // Toutes les questions sont maintenant répondues
+                        self.current_question_index = 0;
+                    }
                 } else {
-                    // On est à la dernière question, on reste sur la dernière
-                    self.current_question_index = audit.questions.len().saturating_sub(1);
+                    // Mode normal : passer à la question suivante
+                    if saved_index < audit.questions.len().saturating_sub(1) {
+                        self.current_question_index = saved_index + 1;
+                    } else {
+                        // On est à la dernière question, on reste sur la dernière
+                        self.current_question_index = audit.questions.len().saturating_sub(1);
+                    }
                 }
             }
             Err(e) => {
@@ -1186,7 +1322,7 @@ impl AppState {
 
         // Header
         let header = Paragraph::new("Survey Audit - Outil d'audit technique et business")
-            .style(Style::default().fg(Color::Yellow))
+            .style(Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD))
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(header, chunks[0]);
@@ -1208,7 +1344,7 @@ impl AppState {
                 };
                 
                 let row_style = if i == self.selected_audit_index {
-                    Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+                    Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD)
                 } else {
                     Style::default()
                 };
@@ -1279,15 +1415,15 @@ impl AppState {
             "n: Nouvel audit | ↑↓: Navigation | Entrée: Ouvrir | r: Résultats | e: Exporter TXT | y: Exporter YAML | i: Importer | d: Supprimer | q: Quitter".to_string()
         };
         let help = Paragraph::new(footer_text)
-            .style(Style::default().fg(
+            .style(
                 if self.pending_delete_audit_id.is_some() {
-                    Color::Yellow
+                    Style::default().fg(Color::Rgb(255, 0, 255)).add_modifier(Modifier::BOLD)
                 } else if self.error_message.is_some() {
-                    Color::Red
+                    Style::default().fg(Color::Red)
                 } else {
-                    Color::DarkGray
+                    Style::default().fg(Color::DarkGray)
                 }
-            ))
+            )
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(help, chunks[2]);
@@ -1313,15 +1449,31 @@ impl AppState {
             return;
         }
 
-        if self.current_question_index >= audit.questions.len() {
-            let msg = Paragraph::new("✓ Audit terminé ! Toutes les questions ont été répondues.")
-                .alignment(Alignment::Center)
-                .block(Block::default().borders(Borders::ALL));
+        let visible_indices = self.get_visible_question_indices();
+        
+        if visible_indices.is_empty() {
+            let msg = if self.filter_unanswered {
+                Paragraph::new("✓ Toutes les questions ont été répondues ! Appuyez sur 'f' pour voir toutes les questions.")
+                    .alignment(Alignment::Center)
+                    .block(Block::default().borders(Borders::ALL))
+            } else {
+                Paragraph::new("✓ Audit terminé ! Toutes les questions ont été répondues.")
+                    .alignment(Alignment::Center)
+                    .block(Block::default().borders(Borders::ALL))
+            };
             f.render_widget(msg, f.area());
             return;
         }
 
-        let question = &audit.questions[self.current_question_index];
+        // Ajuster l'index si nécessaire pour éviter les index hors limites
+        let current_idx = if self.current_question_index >= visible_indices.len() {
+            visible_indices.len().saturating_sub(1)
+        } else {
+            self.current_question_index
+        };
+
+        let real_index = visible_indices[current_idx];
+        let question = &audit.questions[real_index];
         let existing_answer = audit.answers.iter().find(|a| a.question_id == question.id);
 
         let chunks = Layout::default()
@@ -1343,10 +1495,21 @@ impl AppState {
         f.render_widget(header, chunks[0]);
 
         // Progression
+        let total_questions = if self.filter_unanswered {
+            visible_indices.len()
+        } else {
+            audit.questions.len()
+        };
+        let filter_indicator = if self.filter_unanswered {
+            format!(" [Filtre: {} non répondues]", visible_indices.len())
+        } else {
+            String::new()
+        };
         let progress_text = format!(
-            "Question {} / {} - Catégorie: {}",
-            self.current_question_index + 1,
-            audit.questions.len(),
+            "Question {} / {}{} - Catégorie: {}",
+            current_idx + 1,
+            total_questions,
+            filter_indicator,
             question.category
         );
         let progress_widget = Paragraph::new(progress_text)
@@ -1354,8 +1517,19 @@ impl AppState {
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(progress_widget, chunks[1]);
 
-        // Question
-        let mut question_text = vec![
+        // Diviser la zone principale en 3 sections
+        let main_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage(50),  // Section Question + Description (flexible)
+                Constraint::Length(7),       // Section Réponse (fixe)
+                Constraint::Min(4),          // Section Commentaire (minimum 4 lignes)
+            ])
+            .split(chunks[2]);
+
+        // Section 1: Question + Description
+        let mut question_lines = vec![
+            Line::from(""),
             Line::from(vec![Span::styled(
                 &question.text,
                 Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
@@ -1364,33 +1538,159 @@ impl AppState {
         ];
         
         if let Some(desc) = &question.description {
-            question_text.push(Line::from(vec![Span::styled(
+            question_lines.push(Line::from(vec![Span::styled(
+                "Description:",
+                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            )]));
+            question_lines.push(Line::from(""));
+            question_lines.push(Line::from(vec![Span::styled(
                 desc,
                 Style::default().fg(Color::DarkGray),
             )]));
-            question_text.push(Line::from(""));
         }
+
+        let question_widget = Paragraph::new(question_lines)
+            .wrap(Wrap { trim: true })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(" Question ")
+                    .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+            );
+        f.render_widget(question_widget, main_chunks[0]);
+
+        // Section 2: Réponse
+        let mut answer_lines = vec![
+            Line::from(""),
+        ];
 
         if let Some(answer) = existing_answer {
-            question_text.push(Line::from(vec![
-                Span::styled("Réponse: ", Style::default().fg(Color::Yellow)),
+            let answer_color = match answer.answer {
+                Answer::Oui => Color::Green,
+                Answer::Non => Color::Red,
+                Answer::JeNeSaisPas => Color::Yellow,
+                Answer::NonApplicable => Color::DarkGray,
+            };
+            answer_lines.push(Line::from(vec![
                 Span::styled(
                     format!("{}", answer.answer),
-                    Style::default().fg(Color::Green),
+                    Style::default().fg(answer_color).add_modifier(Modifier::BOLD),
                 ),
             ]));
+            if let Some(percentage) = answer.percentage {
+                answer_lines.push(Line::from(vec![
+                    Span::styled("Pourcentage: ", Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        format!("{}%", percentage),
+                        Style::default().fg(Color::Cyan),
+                    ),
+                ]));
+            }
+        } else {
+            answer_lines.push(Line::from(vec![Span::styled(
+                "Aucune réponse",
+                Style::default().fg(Color::DarkGray),
+            )]));
         }
 
-        let question_widget = Paragraph::new(question_text)
+        answer_lines.push(Line::from(""));
+        if self.input_mode == InputMode::Comment {
+            answer_lines.push(Line::from(vec![Span::styled(
+                "Mode commentaire actif - Tapez votre commentaire puis Entrée",
+                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            )]));
+        } else {
+            answer_lines.push(Line::from(vec![Span::styled(
+                "Raccourcis: c=Commentaire | o=Oui | n=Non | j=Je ne sais pas | a=Non applicable",
+                Style::default().fg(Color::DarkGray),
+            )]));
+        }
+
+        let answer_widget = Paragraph::new(answer_lines)
             .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL).title("Question"));
-        f.render_widget(question_widget, chunks[2]);
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(" Réponse ")
+                    .title_style(Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
+            );
+        f.render_widget(answer_widget, main_chunks[1]);
+
+        // Section 3: Commentaire
+        let mut comment_lines = vec![
+            Line::from(""),
+        ];
+
+        if self.input_mode == InputMode::Comment {
+            // Afficher le commentaire en cours de saisie
+            if self.answer_comment.is_empty() {
+                comment_lines.push(Line::from(vec![
+                    Span::styled("> ", Style::default().fg(Color::Yellow)),
+                    Span::styled("_", Style::default().fg(Color::DarkGray)),
+                ]));
+            } else {
+                // Afficher le commentaire ligne par ligne
+                for line in self.answer_comment.lines() {
+                    comment_lines.push(Line::from(vec![
+                        Span::styled("> ", Style::default().fg(Color::Yellow)),
+                        Span::styled(line, Style::default().fg(Color::White)),
+                    ]));
+                }
+            }
+        } else {
+            // Afficher le commentaire sauvegardé ou le commentaire en cours (pas encore sauvegardé)
+            let comment_to_show = if let Some(answer) = existing_answer {
+                answer.comment.as_ref()
+            } else {
+                None
+            };
+            
+            // Si pas de commentaire sauvegardé mais qu'on a un commentaire en cours, l'afficher
+            let comment_to_show = if comment_to_show.is_some() {
+                comment_to_show
+            } else if !self.answer_comment.is_empty() {
+                Some(&self.answer_comment)
+            } else {
+                None
+            };
+            
+            if let Some(comment) = comment_to_show {
+                for line in comment.lines() {
+                    comment_lines.push(Line::from(vec![Span::styled(
+                        line,
+                        Style::default().fg(Color::White),
+                    )]));
+                }
+            } else {
+                comment_lines.push(Line::from(vec![Span::styled(
+                    "Aucun commentaire",
+                    Style::default().fg(Color::DarkGray),
+                )]));
+            }
+        }
+
+        let comment_widget = Paragraph::new(comment_lines)
+            .wrap(Wrap { trim: true })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(" Commentaire ")
+                    .title_style(Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD))
+            );
+        f.render_widget(comment_widget, main_chunks[2]);
 
         // Footer avec instructions claires
-        let help_text = if existing_answer.is_some() {
-            "↑↓: Navigation | o/n/j/a: Répondre | r: Résultats | e: Exporter | q: Retour"
+        let filter_hint = if self.filter_unanswered {
+            " | f: Voir toutes"
         } else {
-            "↑↓: Navigation | o: Oui | n: Non | j: Je ne sais pas | a: Non applicable | r: Résultats | e: Exporter | q: Retour"
+            " | f: Filtrer non répondues"
+        };
+        let help_text = if self.input_mode == InputMode::Comment {
+            format!("Mode commentaire | Entrée: Valider | Esc: Annuler | r: Résultats | e: Exporter{filter_hint} | q: Retour")
+        } else if existing_answer.is_some() {
+            format!("↑↓: Navigation | c: Commentaire | o/n/j/a: Répondre | r: Résultats | e: Exporter{filter_hint} | q: Retour")
+        } else {
+            format!("↑↓: Navigation | c: Commentaire | o: Oui | n: Non | j: Je ne sais pas | a: Non applicable | r: Résultats | e: Exporter{filter_hint} | q: Retour")
         };
         let help = Paragraph::new(help_text)
             .style(Style::default().fg(Color::DarkGray))
@@ -1417,25 +1717,25 @@ impl AppState {
 
         let form_text = vec![
             Line::from(vec![
-                Span::styled("Nom: ", Style::default().fg(Color::Yellow)),
+                Span::styled("Nom: ", Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD)),
                 Span::styled(
                     if self.new_audit_name.is_empty() { "_" } else { &self.new_audit_name },
                     if self.input_mode == InputMode::Name {
-                        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+                        Style::default().fg(Color::Rgb(255, 165, 0)).add_modifier(Modifier::BOLD)
                     } else {
                         Style::default()
                     },
                 ),
             ]),
             Line::from({
-                let mut type_spans = vec![Span::styled("Type: ", Style::default().fg(Color::Yellow))];
+                let mut type_spans = vec![Span::styled("Type: ", Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD))];
                 for (i, &type_name) in AUDIT_TYPES.iter().enumerate() {
                     let is_selected = i == self.new_audit_type_index;
                     let is_active = self.input_mode == InputMode::Type;
                     let style = if is_selected && is_active {
-                        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+                        Style::default().fg(Color::Rgb(255, 165, 0)).add_modifier(Modifier::BOLD)
                     } else if is_selected {
-                        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+                        Style::default().fg(Color::Rgb(255, 165, 0)).add_modifier(Modifier::BOLD)
                     } else {
                         Style::default().fg(Color::DarkGray)
                     };
@@ -1447,22 +1747,22 @@ impl AppState {
                 Line::from(type_spans)
             }),
             Line::from(vec![
-                Span::styled("Projet: ", Style::default().fg(Color::Yellow)),
+                Span::styled("Projet: ", Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD)),
                 Span::styled(
                     if self.new_project_name.is_empty() { "_" } else { &self.new_project_name },
                     if self.input_mode == InputMode::Project {
-                        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+                        Style::default().fg(Color::Rgb(255, 165, 0)).add_modifier(Modifier::BOLD)
                     } else {
                         Style::default()
                     },
                 ),
             ]),
             Line::from(vec![
-                Span::styled("Produit: ", Style::default().fg(Color::Yellow)),
+                Span::styled("Produit: ", Style::default().fg(Color::Rgb(0, 255, 255)).add_modifier(Modifier::BOLD)),
                 Span::styled(
                     if self.new_product_name.is_empty() { "_" } else { &self.new_product_name },
                     if self.input_mode == InputMode::Product {
-                        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+                        Style::default().fg(Color::Rgb(255, 165, 0)).add_modifier(Modifier::BOLD)
                     } else {
                         Style::default()
                     },
@@ -1747,6 +2047,7 @@ impl Default for AppState {
             error_message: None,
             pending_delete_audit_id: None,
             import_file_input_id: None,
+            filter_unanswered: false,
         };
         state.load_audits();
         state

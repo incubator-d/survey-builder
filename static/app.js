@@ -394,59 +394,75 @@ function renderQuestion(question, audit) {
             ${question.description ? `<div class="question-description">${escapeHtml(question.description)}</div>` : ''}
             ${question.links && question.links.length > 0 ? `
                 <div class="question-links">
-                    ${question.links.map(link => `<a href="${link}" target="_blank">→ ${escapeHtml(link)}</a>`).join('')}
+                    ${question.links.map(link => `<a href="${link}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(link)}</a>`).join('')}
                 </div>
             ` : ''}
             <div class="answer-section">
                 ${isAnswered ? `
                     <div class="current-answer">
-                        <strong>Réponse actuelle:</strong> ${answer.answer}
-                        ${answer.percentage !== null ? ` (${answer.percentage}%)` : ''}
-                        ${answer.comment ? `<br><em>${escapeHtml(answer.comment)}</em>` : ''}
+                        <strong>✓ Réponse actuelle:</strong>
+                        <span>${answer.answer}${answer.percentage !== null ? ` (${answer.percentage}%)` : ''}</span>
+                        ${answer.comment ? `<em>${escapeHtml(answer.comment)}</em>` : ''}
                     </div>
                 ` : ''}
-                <div class="answer-buttons">
-                    <button class="answer-btn ${answer?.answer === 'Oui' ? 'selected oui' : ''}" 
-                            onclick="answerQuestion('${question.id}', 'oui', ${question.requires_percentage})">
-                        Oui
-                    </button>
-                    <button class="answer-btn ${answer?.answer === 'Non' ? 'selected non' : ''}" 
-                            onclick="answerQuestion('${question.id}', 'non', ${question.requires_percentage})">
-                        Non
-                    </button>
-                    <button class="answer-btn ${answer?.answer === 'JeNeSaisPas' ? 'selected' : ''}" 
-                            onclick="answerQuestion('${question.id}', 'je-ne-sais-pas', ${question.requires_percentage})">
-                        Je ne sais pas
-                    </button>
-                    <button class="answer-btn ${answer?.answer === 'NonApplicable' ? 'selected' : ''}" 
-                            onclick="answerQuestion('${question.id}', 'non-applicable', ${question.requires_percentage})">
-                        Non applicable
-                    </button>
-                </div>
-                ${question.requires_percentage ? `
-                    <div style="margin-top: 0.5rem;">
-                        <label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">
-                            Pourcentage (0-100):
-                        </label>
-                        <input type="number" id="percentage-${question.id}" 
-                               class="percentage-input" 
-                               min="0" max="100" 
-                               value="${answer?.percentage || ''}"
-                               placeholder="0-100">
-                    </div>
-                ` : ''}
-                <div style="margin-top: 0.5rem;">
-                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">
-                        Commentaire (optionnel):
+                <div>
+                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: var(--primary); font-size: 0.95rem;">
+                        Sélectionnez une réponse:
                     </label>
-                    <textarea id="comment-${question.id}" 
-                              class="comment-input" 
-                              placeholder="Ajoutez un commentaire...">${answer?.comment || ''}</textarea>
+                    <div class="answer-buttons">
+                        <button class="answer-btn ${answer?.answer === 'Oui' ? 'selected oui' : ''}" 
+                                onclick="answerQuestion('${question.id}', 'oui', ${question.requires_percentage})"
+                                title="Raccourci: O">
+                            ✓ Oui
+                        </button>
+                        <button class="answer-btn ${answer?.answer === 'Non' ? 'selected non' : ''}" 
+                                onclick="answerQuestion('${question.id}', 'non', ${question.requires_percentage})"
+                                title="Raccourci: N">
+                            ✗ Non
+                        </button>
+                        <button class="answer-btn ${answer?.answer === 'JeNeSaisPas' ? 'selected' : ''}" 
+                                onclick="answerQuestion('${question.id}', 'je-ne-sais-pas', ${question.requires_percentage})"
+                                title="Raccourci: J">
+                            ? Je ne sais pas
+                        </button>
+                        <button class="answer-btn ${answer?.answer === 'NonApplicable' ? 'selected' : ''}" 
+                                onclick="answerQuestion('${question.id}', 'non-applicable', ${question.requires_percentage})"
+                                title="Raccourci: A">
+                            ⊘ Non applicable
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-primary" style="margin-top: 0.5rem;" 
-                        onclick="saveAnswer('${question.id}', ${question.requires_percentage})">
-                    ${isAnswered ? 'Mettre à jour' : 'Enregistrer'}
-                </button>
+                <div class="answer-inputs-group">
+                    ${question.requires_percentage ? `
+                        <div class="percentage-input-group">
+                            <label for="percentage-${question.id}">
+                                Pourcentage (0-100):
+                            </label>
+                            <input type="number" 
+                                   id="percentage-${question.id}" 
+                                   class="percentage-input" 
+                                   min="0" 
+                                   max="100" 
+                                   value="${answer?.percentage || ''}"
+                                   placeholder="0-100">
+                        </div>
+                    ` : ''}
+                    <div class="comment-input-group">
+                        <label for="comment-${question.id}">
+                            Commentaire (optionnel):
+                        </label>
+                        <textarea id="comment-${question.id}" 
+                                  class="comment-input" 
+                                  placeholder="Ajoutez un commentaire pour préciser votre réponse...">${answer?.comment || ''}</textarea>
+                    </div>
+                </div>
+                <div class="save-button-container">
+                    <button class="btn btn-primary" 
+                            onclick="saveAnswer('${question.id}', ${question.requires_percentage})"
+                            style="min-width: 180px; padding: 0.875rem 1.5rem; font-size: 1rem; font-weight: 600;">
+                        ${isAnswered ? '✓ Mettre à jour la réponse' : '💾 Enregistrer la réponse'}
+                    </button>
+                </div>
             </div>
         </div>
     `;

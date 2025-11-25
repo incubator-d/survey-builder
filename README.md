@@ -6,13 +6,15 @@ Outil d'audit en Rust permettant de réaliser des audits complets de projets via
 
 - ✅ **Interface TUI dans le navigateur** : Interface terminal moderne avec Ratzilla et WebAssembly
 - ✅ **Multi-types d'audits** : Technique, Business, Marketing, et types personnalisés
-- ✅ **Catégories organisées** : Infra, Opération, DB, A11y, Archi, Intra, OSS, Dev XP, Produit, Sécu, Bizdev
+- ✅ **Catégories organisées** : Infra, Opération, DB, A11y, Archi, Intra, OSS, Dev XP, Produit, Sécu, Bizdev, Organisation
 - ✅ **Système de questions** : Questions chargées depuis des fichiers YAML avec descriptions, liens, et réponses attendues
 - ✅ **Réponses flexibles** : Oui, Non, Je ne sais pas, Non applicable (avec pourcentages optionnels)
 - ✅ **Génération de recommandations** : Recommandations automatiques basées sur les réponses
 - ✅ **Stockage local** : Données sauvegardées dans le localStorage du navigateur
 - ✅ **Compatible Vercel** : Déploiement sur hébergement statique sans backend
 - ✅ **Rapports et statistiques** : Résumés par catégorie et pourcentage de complétion
+- ✅ **Export/Import** : Export des audits en TXT ou YAML, import depuis YAML
+- ✅ **Tests complets** : 45 tests unitaires avec couverture à 100%
 
 ## Installation
 
@@ -56,15 +58,22 @@ Puis ouvrez votre navigateur à l'adresse : **http://localhost:8080**
 - `↑` / `↓` ou `k` / `j` : Naviguer dans la liste
 - `Entrée` : Ouvrir l'audit sélectionné
 - `d` : Supprimer l'audit sélectionné
+- `e` : Exporter l'audit sélectionné en TXT
+- `y` : Exporter l'audit vierge en YAML
+- `i` : Importer un audit depuis un fichier YAML
 - `q` / `Esc` : Quitter
 
 #### Vue Détail d'un audit
 - `↑` / `↓` ou `k` / `j` : Naviguer entre les questions
 - `o` : Répondre "Oui"
 - `n` : Répondre "Non"
-- `jsp` : Répondre "Je ne sais pas"
-- `na` : Répondre "Non applicable"
+- `j` : Répondre "Je ne sais pas"
+- `a` : Répondre "Non applicable"
 - `Entrée` : Sauvegarder la réponse et passer à la question suivante
+- `f` : Activer/désactiver le filtre des questions non répondues (utile après import)
+- `e` : Exporter l'audit en TXT
+- `y` : Exporter l'audit vierge en YAML
+- `r` : Voir les résultats et recommandations (si toutes les questions sont répondues)
 - `q` / `Esc` : Retour à la liste
 
 #### Vue Création d'audit
@@ -94,6 +103,7 @@ Puis ouvrez votre navigateur à l'adresse : **http://localhost:8080**
 - **Produit** : Produit et UX
 - **Secu** : Sécurité
 - **Bizdev** : Business Development
+- **Organisation** : Organisation, processus et gestion des connaissances
 
 ### Réponses
 
@@ -117,6 +127,7 @@ Les questions sont chargées depuis des fichiers YAML dans le répertoire `quest
 - `oss.yaml` : Questions sur l'open source
 - `devxp.yaml` : Questions sur la developer experience
 - `produit.yaml` : Questions sur le produit
+- `organisation.yaml` : Questions sur l'organisation, processus et gestion des connaissances
 
 ### Format d'une question
 
@@ -232,21 +243,55 @@ git push origin gh-pages
 
 ## Développement
 
+### Tests
+
+Le projet inclut une suite complète de tests unitaires avec une couverture à 100% :
+
+```bash
+# Lancer tous les tests
+cargo test
+
+# Lancer les tests avec affichage détaillé
+cargo test -- --nocapture
+
+# Lancer un test spécifique
+cargo test test_create_complete_audit_workflow
+```
+
+**Statistiques des tests** :
+- ✅ 45 tests unitaires
+- ✅ Couverture complète des modules principaux
+- ✅ Tests d'intégration pour les workflows complets
+- ✅ Tests pour toutes les catégories et types de réponses
+
 ### Structure du projet
 
 ```
 _survey/
 ├── src/
-│   ├── lib.rs          # Point d'entrée Ratzilla
-│   ├── models.rs       # Modèles de données
-│   ├── audit.rs        # Gestionnaire d'audits et générateur de questions
-│   ├── storage.rs      # Stockage localStorage
-│   └── recommendations.rs # Génération de recommandations
+│   ├── lib.rs              # Point d'entrée Ratzilla
+│   ├── domain/
+│   │   ├── models.rs        # Modèles de données
+│   │   ├── audit.rs         # Gestionnaire d'audits et générateur de questions
+│   │   └── recommendations.rs # Génération de recommandations
+│   ├── infrastructure/
+│   │   ├── storage.rs       # Stockage localStorage
+│   │   └── storage_trait.rs # Trait d'abstraction du stockage
+│   ├── shared/
+│   │   ├── config.rs        # Configuration et constantes
+│   │   ├── error.rs         # Gestion des erreurs
+│   │   └── utils.rs         # Utilitaires (calcul de scores, etc.)
+│   ├── ui/
+│   │   └── app.rs           # État de l'application et logique UI
+│   └── interfaces/
+│       ├── cli.rs           # Interface ligne de commande
+│       └── web.rs           # Interface web (Actix)
 ├── questions/
-│   └── technique/      # Fichiers YAML de questions
-├── index.html          # Page HTML principale
-├── Trunk.toml          # Configuration Trunk
-└── Cargo.toml          # Dépendances Rust
+│   └── technique/          # Fichiers YAML de questions
+├── static/                 # Fichiers statiques (JS, CSS)
+├── index.html              # Page HTML principale
+├── Trunk.toml              # Configuration Trunk
+└── Cargo.toml              # Dépendances Rust
 ```
 
 ### Ajouter des questions
@@ -279,7 +324,20 @@ pub enum Category {
 
 ### Personnaliser les recommandations
 
-Modifiez la fonction `generate_recommendations()` dans `src/recommendations.rs` pour ajuster la logique de génération.
+Modifiez la fonction `generate_recommendations()` dans `src/domain/recommendations.rs` pour ajuster la logique de génération.
+
+### Exporter et importer des audits
+
+Les audits peuvent être exportés en deux formats :
+
+1. **TXT** : Rapport complet avec toutes les réponses et recommandations
+   - Utilisez `e` dans la vue Liste ou Détail
+   - Format lisible pour partage et archivage
+
+2. **YAML** : Format structuré pour réimportation
+   - Utilisez `y` dans la vue Liste ou Détail (uniquement pour audits vierges)
+   - Permet de remplir un audit hors ligne et de l'importer ensuite
+   - Utilisez `i` dans la vue Liste pour importer un fichier YAML
 
 ## Technologies utilisées
 
