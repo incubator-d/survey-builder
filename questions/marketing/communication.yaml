@@ -1,0 +1,43 @@
+questions:
+  - text: "Avez-vous une identité visuelle cohérente (logo, charte graphique, ton) ?"
+    description: "Identité de marque professionnelle et cohérente. Essentiel pour la crédibilité et la reconnaissance."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un site web professionnel et à jour ?"
+    description: "Site web moderne, informatif et facile à naviguer. Essentiel pour la crédibilité et la visibilité."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une présence active sur les réseaux sociaux pertinents pour votre secteur ?"
+    description: "Activité régulière sur les réseaux sociaux adaptés à votre cible. Important pour la visibilité et l'engagement."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous l'email marketing pour communiquer avec vos prospects et clients ?"
+    description: "Campagnes email régulières pour informer et engager. Efficace pour maintenir le contact."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des supports de communication variés (vidéos, infographies, guides PDF) ?"
+    description: "Contenus multimédias pour varier les formats et toucher différents profils. Améliore l'engagement."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Participez-vous à des événements (salons, conférences, webinaires) pour promouvoir votre solution ?"
+    description: "Présence active dans les événements du secteur. Important pour le networking et la notoriété."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de relations presse ou de communication média ?"
+    description: "Relations avec les médias et influenceurs du secteur. Peut accroître significativement la visibilité."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+

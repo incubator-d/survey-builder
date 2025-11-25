@@ -1,0 +1,37 @@
+questions:
+  - text: "Avez-vous défini votre proposition de valeur unique (USP) ?"
+    description: "Message clair sur ce qui différencie votre solution de la concurrence. Fondamental pour toute stratégie marketing."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous réalisé une analyse de marché (taille, croissance, tendances) ?"
+    description: "Compréhension approfondie du marché cible. Essentiel pour adapter la stratégie marketing."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini votre positionnement marketing par rapport à la concurrence ?"
+    description: "Position claire dans l'esprit des clients cibles. Essentiel pour se différencier."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un plan marketing annuel avec objectifs et budget ?"
+    description: "Planification structurée des actions marketing avec ressources allouées. Essentiel pour l'efficacité."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous défini des personas marketing détaillés avec parcours utilisateur ?"
+    description: "Profils détaillés des cibles avec leurs parcours de découverte et d'adoption. Essentiel pour cibler efficacement."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de contenu marketing (blog, ressources, guides) ?"
+    description: "Production régulière de contenu utile pour attirer et éduquer les prospects. Essentiel pour l'inbound marketing."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+

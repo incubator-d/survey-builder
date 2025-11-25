@@ -1,0 +1,43 @@
+questions:
+  - text: "Avez-vous mis en place des canaux d'acquisition de leads (formulaires, landing pages) ?"
+    description: "Mécanismes pour capturer les contacts intéressés. Essentiel pour construire un pipeline commercial."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous le référencement naturel (SEO) pour améliorer votre visibilité en ligne ?"
+    description: "Optimisation pour les moteurs de recherche. Essentiel pour attirer du trafic qualifié gratuitement."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une stratégie de publicité en ligne (Google Ads, réseaux sociaux) ?"
+    description: "Campagnes publicitaires ciblées pour générer du trafic et des leads. Peut accélérer la croissance."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Mesurez-vous le coût d'acquisition client (CAC) par canal marketing ?"
+    description: "Suivi des coûts d'acquisition par canal pour optimiser les investissements. Essentiel pour l'efficacité."
+    category: Bizdev
+    requires_percentage: true
+    expected_answer: Oui
+  
+  - text: "Avez-vous mis en place un programme de parrainage ou de recommandation ?"
+    description: "Incentives pour que les clients existants recommandent la solution. Efficace et peu coûteux."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Utilisez-vous le marketing automation pour qualifier et nourrir vos leads ?"
+    description: "Automatisation des communications marketing pour convertir les leads. Améliore l'efficacité."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de scoring des leads pour prioriser les opportunités ?"
+    description: "Système pour évaluer la qualité des leads et prioriser les efforts commerciaux. Améliore l'efficacité."
+    category: Organisation
+    requires_percentage: false
+    expected_answer: Oui
+

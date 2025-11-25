@@ -98,6 +98,12 @@ pub async fn create_audit(
                 audit.add_question(q);
             }
         }
+        AuditType::Marketing => {
+            let questions = QuestionGenerator::generate_marketing_questions();
+            for q in questions {
+                audit.add_question(q);
+            }
+        }
         _ => {}
     }
 

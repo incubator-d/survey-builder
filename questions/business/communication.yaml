@@ -1,0 +1,43 @@
+questions:
+  - text: "Avez-vous un plan de communication ou marketing pour promouvoir votre solution ?"
+    description: "Stratégie de communication avec messages clés, canaux, et calendrier. Essentiel pour faire connaître la solution."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous identifié vos personas cibles (utilisateurs finaux, décideurs, prescripteurs) ?"
+    description: "Profils types des différents acteurs concernés par votre solution. Essentiel pour adapter la communication."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous des supports de communication adaptés à chaque cible (plaquettes, présentations, démos) ?"
+    description: "Matériel de communication varié et adapté aux différents interlocuteurs. Essentiel pour convaincre efficacement."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Participez-vous à des événements (salons, conférences, webinaires) pour promouvoir votre solution ?"
+    description: "Présence active dans les événements du secteur pour visibilité et networking. Important pour la notoriété."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous une présence digitale active (site web, réseaux sociaux, blog) ?"
+    description: "Présence en ligne régulière et professionnelle. Essentiel pour la visibilité et la crédibilité."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Collectez-vous et utilisez-vous des témoignages clients ou cas d'usage ?"
+    description: "Témoignages et retours d'expérience pour crédibiliser la solution. Très efficace pour convaincre."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+  
+  - text: "Avez-vous un processus de veille sur les besoins et tendances du secteur ?"
+    description: "Surveillance active des évolutions du secteur pour adapter l'offre. Essentiel pour rester pertinent."
+    category: Bizdev
+    requires_percentage: false
+    expected_answer: Oui
+

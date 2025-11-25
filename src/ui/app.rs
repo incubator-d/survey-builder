@@ -1134,6 +1134,16 @@ impl AppState {
                     audit.add_question(q);
                 }
             }
+            AuditType::Marketing => {
+                let mut questions = QuestionGenerator::generate_marketing_questions();
+                // Trier les questions par catégorie pour les grouper
+                questions.sort_by(|a, b| {
+                    format!("{}", a.category).cmp(&format!("{}", b.category))
+                });
+                for q in questions {
+                    audit.add_question(q);
+                }
+            }
             _ => {
                 // Pas de questions par défaut pour les autres types
             }
