@@ -1,5 +1,10 @@
 # Survey Audit - Outil d'audit technique et business
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://www.rust-lang.org/)
+[![CI](https://github.com/USERNAME/survey-audit/workflows/CI/badge.svg)](https://github.com/USERNAME/survey-audit/actions)
+[![WebAssembly](https://img.shields.io/badge/WebAssembly-wasm32--unknown--unknown-blue.svg)](https://webassembly.org/)
+
 Outil d'audit en Rust permettant de réaliser des audits complets de projets via des questionnaires structurés, avec génération automatique de recommandations. Interface TUI (Terminal User Interface) dans le navigateur grâce à [Ratzilla](https://github.com/orhun/ratzilla).
 
 ## Fonctionnalités
@@ -27,8 +32,8 @@ Outil d'audit en Rust permettant de réaliser des audits complets de projets via
 
 ```bash
 # Cloner le projet
-git clone <url-du-repo>
-cd _survey
+git clone https://github.com/USERNAME/survey-audit.git
+cd survey-audit
 
 # Installer Trunk (outil de build pour WebAssembly)
 cargo install --locked trunk
@@ -348,10 +353,41 @@ Les audits peuvent être exportés en deux formats :
 - **Serde** : Sérialisation/désérialisation JSON et YAML
 - **localStorage** : Stockage côté client
 
+## Contribuer
+
+Les contributions sont les bienvenues ! Ce projet suit le [Code de conduite du contributeur](CODE_OF_CONDUCT.md). 
+
+Pour commencer :
+- Lisez notre [guide de contribution](CONTRIBUTING.md)
+- Consultez les [issues ouvertes](../../issues) pour voir où vous pouvez aider
+- Consultez le [CHANGELOG](CHANGELOG.md) pour voir les changements récents
+
+### Comment contribuer
+
+1. 🍴 Fork le projet
+2. 🌿 Créez une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
+3. 💻 Committez vos changements (`git commit -m 'feat: Add some AmazingFeature'`)
+4. 📤 Pushez vers la branche (`git push origin feature/AmazingFeature`)
+5. 🔀 Ouvrez une Pull Request
+
+Pour plus de détails, consultez le [guide de contribution](CONTRIBUTING.md).
+
+## Code de conduite
+
+Ce projet adhère au [Code de conduite du contributeur](CODE_OF_CONDUCT.md). En participant, vous êtes tenu de maintenir ce code. Veuillez signaler tout comportement inacceptable.
+
 ## Licence
 
-MIT
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ## Inspiration
 
 Cet outil s'inspire de l'outil d'audit technique de l'[Incubateur des Territoires](https://audit.incubateur.anct.gouv.fr/).
+
+## Auteurs et contributeurs
+
+Voir [CHANGELOG](CHANGELOG.md) pour la liste complète des contributeurs.
+
+---
+
+⭐ Si ce projet vous est utile, n'hésitez pas à lui donner une étoile !
