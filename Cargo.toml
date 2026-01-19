@@ -16,7 +16,7 @@ serde_yaml = "0.9"
 uuid = { version = "1.7", features = ["v4", "serde", "js"] }
 chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 ratzilla = "0.2"
 wasm-bindgen = "0.2"
 js-sys = "0.3"
