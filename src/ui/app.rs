@@ -139,10 +139,8 @@ impl AppState {
                         InputMode::Project => {
                             self.input_mode = InputMode::Product;
                         }
-                        InputMode::Product => {
-                            if !self.new_audit_name.is_empty() {
-                                self.create_audit();
-                            }
+                        InputMode::Product if !self.new_audit_name.is_empty() => {
+                            self.create_audit();
                         }
                         _ => {}
                     }
